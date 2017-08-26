@@ -1,5 +1,5 @@
 {
-    "name": "ForgetMeNot",
+    "name": "ForgetMeNot oldish",
     "version": "1.2.0",
     "manifest_version": 2,
     "description": "Bring news articles to life",
@@ -20,7 +20,13 @@
     },
     "web_accessible_resources": [
       "pageScript.js",
-      "jquery.min.js"
+      "js/algoliasearch.min.js",
+      "js/isotope.pkgd.min.js",
+      "js/jquery.min.js",
+      "js/lodash.min.js",
+      "js/q.js",
+      "js/vue_isotope.min.js",
+      "js/vue.js"
     ],
     "background": {
       "scripts": ["background.js"]
