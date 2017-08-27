@@ -1,17 +1,21 @@
 <template lang="html">
   <div class="app">
+    <alert :show="alertData.show" :type="alertData.type" :title="alertData.title"></alert>
+    <modal v-if="modal.show" @close="modal.show = false" v-on:submit="modal.submit" :data="modal">
+      <h3 slot="header">Please enter your new memory</h3>
+    </modal>
     <div class="header">
       <img :src="logo">
       <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search">
       <br>
-      <icon-button icon="search-plus" text="Page" v-bind:click="fromPage" v-if="plugin"></icon-button>
-      <icon-button icon="history" text="Recent" v-bind:click="searchRecent"></icon-button>
-      <icon-button icon="plus" text="Create" v-bind:click="create"></icon-button>
+      <icon-button icon="search-plus" text="Page" :click="fromPage" v-if="plugin"></icon-button>
+      <icon-button icon="history" text="Recent" :click="searchRecent"></icon-button>
+      <icon-button icon="plus" text="Create" :click="beginCreate"></icon-button>
     </div>
 
     <ul id="cards">
       <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
-        <card v-for="card in cards" v-bind:card="card" v-bind:key="card.objectID">
+        <card v-for="card in cards" v-on:editMemory="beginEdit" v-on:deleteMemory="deleteMemory" v-bind:card="card" v-bind:key="card.objectID">
         </card>
       <!-- </isotope> -->
     </ul>
@@ -23,11 +27,17 @@
   import Vue from 'vue';
   import Card from './card.vue';
   import IconButton from './icon-button.vue';
+  import Modal from './modal.vue';
+  import Alert from './alert.vue';
 
   import Q from 'q';
+  import axios from 'axios';
+  import VueAxios from 'vue-axios';
   import Algolia from 'algoliasearch';
   import 'vue-awesome/icons';
   import Icon from 'vue-awesome/components/Icon.vue';
+
+  Vue.use(VueAxios, axios)
 
   const AlgoliaClient = Algolia('I2VKMNNAXI', '2b8406f84cd4cc507da173032c46ee7b');
   const AlgoliaIndex = AlgoliaClient.initIndex('ForgetMeNot_Context');
@@ -35,11 +45,20 @@
   export default {
     data(){
       return {
-        plugin: true,
+        plugin: false,
         logo: "../images/logo.png",
         pageCards: [],
         cards: [],
         query: '',
+        modal: {
+          show: false,
+          text: ''
+        },
+        alertData: {
+          show: false,
+          type: '',
+          title: ''
+        }
       }
     },
     created: function() {
@@ -50,7 +69,9 @@
     components:{
       card: Card,
       icon: Icon,
-      "icon-button": IconButton
+      "icon-button": IconButton,
+      modal: Modal,
+      alert: Alert
     },
     methods: {
       search: function() {
@@ -92,38 +113,79 @@
           console.log(err);
         })
       },
-      create: function() {
-
+      beginCreate: function() {
+        this.modal = {
+          show: true,
+          submit: this.createMemory,
+          text: '',
+        }
       },
-      copytoClipboard: function(element) {
-        console.log(element);
-        console.log(element.target);
-        console.log(this.$el);
-        console.log($(this));
-        // element.target.select();
-        // document.execCommand('copy');
+      createMemory: function(data) {
+        const self = this;
+        if (!data.text) data.text = 'Hello'
+        console.log('data: ', data);
+        const url = 'http://localhost:5000/api/memories'
+        data.sender = '1627888800569309';
+        this.axios.post(url, data)
+        .then((response) => {
+          console.log('Card successfully created');
+          console.log(response)
+          self.query = '';
+          self.cards = [];
+          self.showAlert('success', 2000, 'Card created!')
+        }).catch(function (e) {
+          console.log(e);
+        });
       },
-      createCard: function(text) {
-        // console.log(createCard);
-        // const d = Q.defer()
-        // const self = this;
-        // AlgoliaIndex.addObject({
-        //   firstname: 'Jimmie',
-        //   lastname: 'Barninger'
-        // }, 'myID', function(err, content) {
-        //   console.log('objectID=' + content.objectID);
-        // });
-        // AlgoliaIndex.search(searchText, {
-        //   hitsPerPage: hitsPerPage
-        // }, function(err, content) {
-        //   if (err) {
-        //     console.log(err);
-        //     d.reject(err)
-        //   } else {
-        //     d.resolve(content.hits)
-        //   }
-        // });
-        // return d.promise
+      beginEdit: function(objectID, text) {
+        this.modal = {
+          show: true,
+          submit: this.editMemory,
+          objectID: objectID,
+          text: text,
+        }
+      },
+      editMemory: function(data) {
+        const self = this;
+        console.log('data: ', data);
+        const url = 'http://localhost:5000/api/memories'
+        data.sender = '1627888800569309';
+        this.axios.post(url, data)
+        .then((response) => {
+          console.log('Card successfully edited');
+          console.log(response)
+          self.query = '';
+          self.cards = [];
+          self.showAlert('success', 2000, 'Card updated!')
+        }).catch(function (e) {
+          console.log(e);
+        });
+      },
+      beginDelete: function(objectID) {
+        this.modal = {
+          show: true,
+          submit: this.deleteMemory,
+          objectID: objectID,
+        }
+      },
+      deleteMemory: function(objectID) {
+        const self = this;
+        const url = 'http://localhost:5000/api/memories'
+        const data = {
+          objectID: objectID
+        }
+        data.sender = '1627888800569309';
+        console.log('data: ', data);
+        this.axios.delete(url, {params: data})
+        .then((response) => {
+          console.log('Card successfully deleted');
+          console.log(response)
+          self.query = '';
+          self.cards = [];
+          self.showAlert('success', 2000, 'Card deleted!')
+        }).catch(function (e) {
+          console.log(e);
+        });
       },
       searchCards: function(searchText, hitsPerPage) {
         console.log(searchText);
@@ -194,8 +256,19 @@
           }
         }
         return trimmedArray;
-      }
+      },
       /* End Browser Plugin */
+      showAlert: function(type, duration, title) {
+        const self = this;
+        self.alertData = {
+          show: true,
+          type: type,
+          title: title
+        }
+        setTimeout(function() {
+          self.alertData.show = false;
+        }, duration)
+      }
     }
   }
 </script>
@@ -211,6 +284,7 @@
   .fa-icon {
     margin-bottom: -0.125em;
     color: #777;
+    height: 1.2em;
   }
   body > div.app {
     margin: auto;
@@ -229,7 +303,7 @@
     margin: auto;
   }
 
-  input, button {
+  input, textarea, button {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 5px;

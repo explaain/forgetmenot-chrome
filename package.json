@@ -61,8 +61,12 @@
   },
   "dependencies": {
     "algoliasearch": "^3.24.3",
+    "axios": "^0.16.2",
     "q": "^1.5.0",
     "vue-awesome": "^2.3.1",
-    "vue-clipboards": "^1.1.0"
+    "vue-axios": "^2.0.2",
+    "vue-clickaway": "^2.1.0",
+    "vue-clipboards": "^1.1.0",
+    "vue-js-modal": "^1.2.9"
   }
 }

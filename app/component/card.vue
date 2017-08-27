@@ -4,12 +4,20 @@
     <div class="label"><icon name="clock-o"></icon> Memory</div>
     <p>{{card.sentence}}</p>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
-    <div class="logo">ForgetMeNot</div>
+    <footer>
+      <div class="buttons">
+        <icon-button class="delete" icon="trash" text="Delete" :click="deleteMemory"></icon-button>
+        <icon-button class="edit" icon="pencil" text="Edit" :click="editMemory"></icon-button>
+      </div>
+      <div class="logo">ForgetMeNot</div>
+    </footer>
   </div>
 </template>
 
 <script>
 import Vue from 'vue';
+import IconButton from './icon-button.vue';
+
 import Clipboards from 'vue-clipboards';
 import 'vue-awesome/icons';
 import Icon from 'vue-awesome/components/Icon.vue';
@@ -18,13 +26,22 @@ Vue.use(Clipboards);
 
 export default {
   props: ['card'],
-  data:function(){
+  data: function(){
     return {
       copyIcon: '../images/clipboard.svg',
     }
   },
-  components:{
-    icon: Icon
+  components: {
+    icon: Icon,
+    "icon-button": IconButton,
+  },
+  methods: {
+    editMemory: function() {
+      this.$emit('editMemory', this.card.objectID, this.card.sentence)
+    },
+    deleteMemory: function() {
+      this.$emit('deleteMemory', this.card.objectID)
+    }
   }
 }
 </script>
@@ -72,6 +89,32 @@ export default {
   .card img {
     max-width: calc(100% - 10px);
     border-radius: 5px;
+  }
+  footer {
+    min-height: 20px;
+  }
+  .card footer .buttons {
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    margin: 10px 20px -5px -16px;
+    padding: 6px 12px;
+  }
+  .card button.delete, .card button.edit {
+    padding: 6px 12px;
+    margin: -2px;
+    font-size: 12px;
+  }
+  .card button.delete {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .card button.delete:hover {
+    background: #ffaaaa;
+  }
+  .card button.edit {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
   }
   .card .logo {
     position: absolute;
