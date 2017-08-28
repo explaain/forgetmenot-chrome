@@ -1,6 +1,6 @@
 <template lang="html">
   <div class="card shadow">
-    <button class="copy" type="button" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
+    <button class="copy" type="button" @click="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
     <div class="label"><icon name="clock-o"></icon> Memory</div>
     <p>{{card.sentence}}</p>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
@@ -41,6 +41,10 @@ export default {
     },
     deleteMemory: function() {
       this.$emit('deleteMemory', this.card.objectID)
+    },
+    copy: function() {
+      // The v-clipboard directive has already copied the text from the card - this function just shows the alert
+      this.$emit('copy')
     }
   }
 }
@@ -123,6 +127,7 @@ export default {
     font-size: 14px;
     font-weight: bold;
     color: #aaa;
+    color: #424242;
   }
 
 </style>

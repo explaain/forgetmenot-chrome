@@ -1,7 +1,7 @@
 <template lang="html">
   <div class="app">
     <alert :show="alertData.show" :type="alertData.type" :title="alertData.title"></alert>
-    <modal v-if="modal.show" @close="modal.show = false" v-on:submit="modal.submit" :data="modal">
+    <modal v-if="modal.show" @close="modal.show = false" @submit="modal.submit" :data="modal">
       <h3 slot="header">Please enter your new memory</h3>
     </modal>
     <div class="header">
@@ -15,7 +15,7 @@
 
     <ul id="cards">
       <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
-        <card v-for="card in cards" v-on:editMemory="beginEdit" v-on:deleteMemory="deleteMemory" v-bind:card="card" v-bind:key="card.objectID">
+        <card v-for="card in cards" @editMemory="beginEdit" @deleteMemory="deleteMemory" v-bind:card="card" v-bind:key="card.objectID" @copy="copyAlert">
         </card>
       <!-- </isotope> -->
     </ul>
@@ -45,7 +45,7 @@
   export default {
     data(){
       return {
-        plugin: false,
+        plugin: true,
         logo: "../images/logo.png",
         pageCards: [],
         cards: [],
@@ -124,8 +124,8 @@
         const self = this;
         if (!data.text) data.text = 'Hello'
         console.log('data: ', data);
-        const url = 'http://localhost:5000/api/memories'
-        data.sender = '1627888800569309';
+        const url = 'http://forget-me-not--staging.herokuapp.com/api/memories'
+        data.sender = '1455707247850069';
         this.axios.post(url, data)
         .then((response) => {
           console.log('Card successfully created');
@@ -148,8 +148,8 @@
       editMemory: function(data) {
         const self = this;
         console.log('data: ', data);
-        const url = 'http://localhost:5000/api/memories'
-        data.sender = '1627888800569309';
+        const url = 'http://forget-me-not--staging.herokuapp.com/api/memories'
+        data.sender = '1455707247850069';
         this.axios.post(url, data)
         .then((response) => {
           console.log('Card successfully edited');
@@ -170,11 +170,11 @@
       },
       deleteMemory: function(objectID) {
         const self = this;
-        const url = 'http://localhost:5000/api/memories'
+        const url = 'http://forget-me-not--staging.herokuapp.com/api/memories'
         const data = {
           objectID: objectID
         }
-        data.sender = '1627888800569309';
+        data.sender = '1455707247850069';
         console.log('data: ', data);
         this.axios.delete(url, {params: data})
         .then((response) => {
@@ -191,9 +191,12 @@
         console.log(searchText);
         const d = Q.defer()
         const self = this;
-        AlgoliaIndex.search(searchText, {
+        const params = {
+    			query: searchText,
+    			filters: 'userID: ' + 1455707247850069,
           hitsPerPage: hitsPerPage
-        }, function(err, content) {
+    		};
+        AlgoliaIndex.search(params, function(err, content) {
           if (err) {
             console.log(err);
             d.reject(err)
@@ -258,6 +261,9 @@
         return trimmedArray;
       },
       /* End Browser Plugin */
+      copyAlert: function() {
+        this.showAlert('success', 2000, 'Copied to clipboard!')
+      },
       showAlert: function(type, duration, title) {
         const self = this;
         self.alertData = {
@@ -298,7 +304,7 @@
 
   .header img {
     width: 80%;
-    max-width: 300px;
+    max-width: 250px;
     display: block;
     margin: auto;
   }
