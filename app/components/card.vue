@@ -1,6 +1,7 @@
 <template lang="html">
-  <div class="card shadow">
+  <div class="card shadow" :class="{ highlight: card.highlight }">
     <button class="copy" type="button" @click="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
+    <div class="label highlight" v-if="card.highlight"><icon name="bolt"></icon> Top Hit</div>
     <div class="label"><icon name="clock-o"></icon> Memory</div>
     <p>{{card.sentence}}</p>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
@@ -68,6 +69,9 @@ export default {
     box-shadow: 0px 0px 30px rgba(150,150,150,0.5);
     border: none;
   }
+  .card.highlight {
+    box-shadow: 0px 0px 30px rgba(18,114,219,0.5);
+  }
   .card button.copy {
     float: right;
     margin: -5px -5px 10px 20px;
@@ -79,6 +83,10 @@ export default {
     font-size: 14px;
     text-transform: uppercase;
     font-weight: bold;
+    display: inline-block;
+  }
+  .card .label.highlight, .card .label.highlight svg {
+    color: rgb(18,114,219)
   }
   .card .label, .card .label .fa-icon {
     color: #aaa;
@@ -127,7 +135,6 @@ export default {
     font-size: 14px;
     font-weight: bold;
     color: #aaa;
-    color: #424242;
   }
 
 </style>

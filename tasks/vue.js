@@ -3,7 +3,7 @@ import vueify from 'gulp-vueify';
 
 
 gulp.task('vue', function () {
-  return gulp.src('app/component/**/*.vue')
+  return gulp.src('app/components/**/*.vue')
     .pipe(vueify())
-    .pipe(gulp.dest('app/component/'));
+    .pipe(gulp.dest('app/components/'));
 });
