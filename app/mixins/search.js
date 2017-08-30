@@ -112,8 +112,7 @@ module.exports = {
       const d = Q.defer()
       const params = {
         query: '',
-        filters: 'userID: ' + userID + ' AND urlTrigger: ' + pageData.baseUrl
-        // filters: 'urlTrigger: ' + pageData.baseUrl
+        filters: 'userID: ' + userID + ' AND triggerUrl: ' + pageData.baseUrl
       };
       console.log(params);
       this.advancedSearch(params)
