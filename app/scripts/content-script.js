@@ -52,11 +52,6 @@ window.onload = function(e){
       };
       document.body.appendChild(pingDiv);
       console.log(pingDiv);
-
-      // var t = document.createTextNode("CLICK ME");
-      // btn.appendChild(t);
-      // //Appending to DOM
-      // document.body.innerHTML = '<div style="position:fixed;width:70px;height:50px;opacity:0.6;z-index:1000000;position:absolute;right:0;top:0;"><img src="https://upload.wikimedia.org/wikipedia/commons/5/50/Green-animated-arrow.gif" width="50px"></div>' + document.body.innerHTML;
     }
   });
 }

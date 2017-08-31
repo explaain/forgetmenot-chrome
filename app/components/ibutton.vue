@@ -1,6 +1,6 @@
 <template lang="html">
   <button type="button" @click="clickEvent">
-    <icon v-bind:name="icon"></icon>
+    <icon :name="icon"></icon>
     {{text}}
   </button>
 </template>

@@ -7,8 +7,8 @@
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
     <footer>
       <div class="buttons">
-        <icon-button class="delete" icon="trash" text="Delete" :click="deleteMemory"></icon-button>
-        <icon-button class="edit" icon="pencil" text="Edit" :click="editMemory"></icon-button>
+        <ibutton class="delete" icon="trash" text="Delete" :click="deleteCard"></ibutton>
+        <ibutton class="edit" icon="pencil" text="Edit" :click="editCard"></ibutton>
       </div>
       <div class="logo">ForgetMeNot</div>
     </footer>
@@ -17,7 +17,7 @@
 
 <script>
 import Vue from 'vue';
-import IconButton from './icon-button.vue';
+import IconButton from './ibutton.vue';
 
 import Clipboards from 'vue-clipboards';
 import 'vue-awesome/icons';
@@ -34,14 +34,14 @@ export default {
   },
   components: {
     icon: Icon,
-    "icon-button": IconButton,
+    "ibutton": IconButton,
   },
   methods: {
-    editMemory: function() {
-      this.$emit('editMemory', this.card.objectID, this.card.sentence)
+    editCard: function() {
+      this.$emit('editCard', this.card.objectID, this.card.sentence)
     },
-    deleteMemory: function() {
-      this.$emit('deleteMemory', this.card.objectID)
+    deleteCard: function() {
+      this.$emit('deleteCard', this.card.objectID)
     },
     copy: function() {
       // The v-clipboard directive has already copied the text from the card - this function just shows the alert

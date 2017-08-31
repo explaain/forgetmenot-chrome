@@ -1,6 +1,23 @@
 import Search from '../mixins/search.js'
 
-const userID = '1455707247850069';
+const userIDs = {
+  live: {
+    Jeremy: '1627888800569309',
+    Matt: '',
+    Carol: '1459068990878077',
+    Harriet: '',
+  },
+  staging: {
+    Jeremy: '',
+    Matt: '',
+  },
+  local: {
+    Jeremy: '',
+    Matt: '',
+  }
+}
+
+const userID = userIDs.live.Jeremy;
 var pageResults = {};
 
 
@@ -24,6 +41,9 @@ chrome.runtime.onMessage.addListener(
 
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if(request.action == "getUser"){
+    sendResponse(userID);
+  }
   if(request.action == "getPageResults"){
     sendResponse(pageResults);
   }
