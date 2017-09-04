@@ -24,11 +24,13 @@ const Search = {
       const d = Q.defer()
       const params = {
         query: searchText,
-        filters: 'userID: ' + userID,
+        filters: userID.length ? 'userID: ' + userID : '',
         hitsPerPage: hitsPerPage || null
       };
+      console.log(params);
       this.advancedSearch(params)
       .then(function(hits) {
+        console.log(hits);
         d.resolve(hits)
       }).catch(function(e) {
         d.reject(e);

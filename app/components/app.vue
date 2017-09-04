@@ -1,6 +1,6 @@
 <template lang="html">
   <div class="app">
-    <explorer :userID="userID" :logo="logo">
+    <explorer :userID="userID" :logo="logo" :algoliaParams="algoliaParams" :authorParams="authorParams">
       <ibutton slot="buttons" icon="search-plus" text="Page" :click="fromPage" v-if="plugin"></ibutton>
     </explorer>
   </div>
@@ -17,6 +17,14 @@
   export default {
     data(){
       return {
+        algoliaParams: {
+          appID: 'I2VKMNNAXI',
+          apiKey: '2b8406f84cd4cc507da173032c46ee7b',
+          index: 'ForgetMeNot_Context'
+        },
+        authorParams: {
+          url: 'http://forget-me-not--app.herokuapp.com/api/memories'
+        },
         userID: '',
         plugin: true,
         logo: "../images/logo.png",
@@ -48,15 +56,33 @@
         }
       },
       fromPage: function() {
+        console.log('fromPage');
         const self = this;
         if (self.pageCards.length) {
-          self.cards = self.pageCards;
+          console.log(self.pageCards);
+          console.log(1);
+          self.updateCards(self.pageCards, "No cards found from page")
         } else {
           chrome.runtime.sendMessage({action: "getPageResults", event: "popupOpened"}, function(pageResults) {
-            self.pageResults = pageResults;
-            self.cards = pageResults.memories;
+            console.log(2);
+            // console.log(pageResults);
+            // self.pageResults = pageResults;
+            if (pageResults.memories) {
+              self.pageCards = pageResults.memories;
+              console.log(self.pageCards);
+              self.updateCards(self.pageCards, "No cards found from page")
+            }
           });
         }
+      },
+      updateCards: function(cards, noCardMessage) {
+        console.log(cards);
+        const data = {
+          cards: cards,
+          noCardMessage: noCardMessage
+        }
+        this.$emit('updateCards1', data);
+
       },
       // pageResults: function() {
       //   const d = Q.defer()

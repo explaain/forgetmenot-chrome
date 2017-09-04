@@ -4,6 +4,7 @@
     <div class="label highlight" v-if="card.highlight"><icon name="bolt"></icon> Top Hit</div>
     <div class="label"><icon name="clock-o"></icon> Memory</div>
     <p>{{card.sentence}}</p>
+    <p>{{card.description}}</p>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
     <footer>
       <div class="buttons">
@@ -54,9 +55,11 @@ export default {
 <style lang="css">
   .card {
     position: relative;
+    display: inline-block;
+    vertical-align: top;
     margin: 20px;
     width: calc(100% - 50px);
-    max-width: 500px;
+    max-width: 400px;
     min-height: 80px;
     padding: 15px 15px 40px 15px;
     border: 1px solid #ddd;

@@ -5,6 +5,7 @@
     <div class="header">
       <img :src="logo">
       <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search">
+      <br>
       <slot name="buttons"></slot>
       <ibutton icon="history" text="Recent" :click="searchRecent"></ibutton>
       <ibutton icon="plus" text="Create" :click="beginCreate"></ibutton>
@@ -14,6 +15,7 @@
       <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
         <card v-for="card in cards" @editCard="beginEdit" @deleteCard="beginDelete" v-bind:card="card" v-bind:key="card.objectID" @copy="copyAlert">
         </card>
+        <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
       <!-- </isotope> -->
     </ul>
   </div>
@@ -36,24 +38,13 @@
   import 'vue-awesome/icons';
   import Icon from 'vue-awesome/components/Icon.vue';
 
-  const AlgoliaParams = {
-    appID: 'I2VKMNNAXI',
-    apiKey: '2b8406f84cd4cc507da173032c46ee7b',
-    index: 'ForgetMeNot_Context'
-  }
-  const AuthorParams = {
-    url: 'http://forget-me-not--app.herokuapp.com/api/memories'
-    // url: 'http://localhost:5000/api/memories'
-    // url: 'http://b2bcc6db.ngrok.io/api/memories'
-  }
-
-  Vue.use(ExplaainSearch, AlgoliaParams)
-  Vue.use(ExplaainAuthor, AuthorParams)
 
   export default {
     props: [
       'userID',
-      'logo'
+      'logo',
+      'algoliaParams',
+      'authorParams',
     ],
     data(){
       return {
@@ -68,14 +59,19 @@
           show: false,
           type: '',
           title: ''
-        }
+        },
+        noCardMessage: "Type above to search for cards",
       }
     },
     created: function() {
+      Vue.use(ExplaainSearch, this.algoliaParams)
+      Vue.use(ExplaainAuthor, this.authorParams)
+      console.log(this.userID);
       this.modal.sender = this.userID;
       this.modal.callback = this.modalCallback;
+      this.$parent.$on('updateCards1', this.updateCards2);
     },
-    components:{
+    components: {
       card: Card,
       icon: Icon,
       ibutton: IconButton,
@@ -83,12 +79,20 @@
       alert: Alert
     },
     methods: {
+      updateCards2: function(data) {
+        console.log('data');
+        console.log(data);
+        this.cards = data.cards;
+        this.noCardMessage = data.noCardMessage;
+      },
       search: function() {
         const self = this;
         ExplaainSearch.searchCards(self.userID, self.query, 12)
         .then(function(hits) {
           console.log('hits');
-          self.cards = hits
+          console.log(hits);
+          self.cards = hits;
+          self.noCardMessage = "No cards found";
         }).catch(function(err) {
           console.log(err);
         })
@@ -98,6 +102,7 @@
         ExplaainSearch.searchCards(self.userID, "", 24)
         .then(function(hits) {
           self.cards = hits;
+          self.noCardMessage = "No recent cards found";
         }).catch(function(err) {
           console.log(err);
         })
@@ -117,7 +122,11 @@
         this.modal.text = text;
       },
       beginDelete: function(objectID) {
-        return ExplaainAuthor.deleteCard
+        const data = {
+          sender: this.userID,
+          objectID: objectID,
+        }
+        ExplaainAuthor.deleteCard(data)
         // this.modal = {
         //   show: true,
         //   submit: ExplaainAuthor.deleteCard,
@@ -155,7 +164,7 @@
   }
 
   .fa-icon {
-    margin-bottom: -0.125em;
+    margin-bottom: -0.2em;
     color: #777;
     height: 1.2em;
   }
@@ -185,7 +194,6 @@
   input {
     width: calc(100% - 60px);
     max-width: 500px;
-    margin-bottom: 20px;
   }
   input:focus {
     outline:none;
@@ -212,5 +220,12 @@
     vertical-align: top;
     width: 90%;
     max-width: 300px;
+  }
+
+  p.no-cards {
+    text-align: center;
+    margin: 50px 20px;
+    color: #bbb;
+    font-style: italic;
   }
 </style>

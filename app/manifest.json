@@ -2,7 +2,7 @@
   "name": "ForgetMeNot",
   "short_name": "ForgetMeNot",
   "description": "Remember anything",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "manifest_version": 2,
   "default_locale": "en",
   "icons": {

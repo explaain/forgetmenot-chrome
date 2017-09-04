@@ -3,9 +3,10 @@ import Search from '../mixins/search.js'
 const userIDs = {
   live: {
     Jeremy: '1627888800569309',
-    Matt: '',
+    Matt: '1455707247850069',
     Carol: '1459068990878077',
-    Harriet: '',
+    Harriet: '1478776232161468',
+    Jonny: '1513554438729753',
   },
   staging: {
     Jeremy: '',
