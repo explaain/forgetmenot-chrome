@@ -101,6 +101,8 @@
         const self = this;
         ExplaainSearch.searchCards(self.userID, "", 24)
         .then(function(hits) {
+          console.log('hits');
+          console.log(hits);
           self.cards = hits;
           self.noCardMessage = "No recent cards found";
         }).catch(function(err) {

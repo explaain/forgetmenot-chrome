@@ -64,8 +64,8 @@
           self.updateCards(self.pageCards, "No cards found from page")
         } else {
           chrome.runtime.sendMessage({action: "getPageResults", event: "popupOpened"}, function(pageResults) {
-            console.log(2);
-            // console.log(pageResults);
+            console.log(22);
+            console.log(pageResults);
             // self.pageResults = pageResults;
             if (pageResults.memories) {
               self.pageCards = pageResults.memories;
