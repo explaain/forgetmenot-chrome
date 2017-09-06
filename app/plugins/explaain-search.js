@@ -31,7 +31,7 @@ const Search = {
         hitsPerPage: hitsPerPage || null
       };
       console.log(params);
-      this.advancedSearch(params)
+      advancedSearch(params)
       .then(function(hits) {
         console.log(hits);
         d.resolve(hits)
@@ -85,7 +85,6 @@ const Search = {
 
     const compoundSearch = function(userID, searchText) {
       const d = Q.defer()
-      const self = this;
       const maxLength = 400;
       const searchTextArray = [];
       const hitsPerPage = Math.min(Math.max(Math.ceil(10 / (searchText.length / maxLength)), 3), 12);
@@ -93,13 +92,13 @@ const Search = {
         searchTextArray.push(searchText.substring(i, i+maxLength))
       }
       const promises = searchTextArray.map(function(t, j) {
-        return self.searchCards(userID, t, hitsPerPage);
+        return searchCards(userID, t, hitsPerPage);
       });
       Q.allSettled(promises)
       // promises[0]
       .then(function(results) {
         var results = [].concat.apply([], results.map(function(r) {return r.value}));
-        results = self.removeDuplicates(results, 'objectID')
+        results = removeDuplicates(results, 'objectID')
         console.log(results);
         d.resolve(results)
       })
@@ -168,8 +167,10 @@ const Search = {
         filters: 'userID: ' + userID + ' AND triggerUrl: ' + pageData.baseUrl
       };
       console.log(params);
-      this.advancedSearch(params)
+      advancedSearch(params)
       .then(function(reminders) {
+        console.log('reminders');
+        console.log(reminders);
         d.resolve(reminders)
       }).catch(function(e) {
         d.reject(e)
@@ -180,19 +181,18 @@ const Search = {
     const getPageResults = function(userID, pageData) {
       const d = Q.defer()
       // Gets all results
-      const self = this;
       const pageResults = {};
       console.log(userID, pageData);
-      self.compoundSearch(userID, pageData.pageText)
+      compoundSearch(userID, pageData.pageText)
       .then(function(results) {
         console.log(1);
         console.log(results);
         pageResults.memories = results;
         // Checks whether a ping is required
-        pageResults.hits = self.checkPageHit(pageData, results);
+        pageResults.hits = checkPageHit(pageData, results);
         console.log(2);
         console.log(pageResults.hits);
-        return self.checkPageReminder(userID, pageData)
+        return checkPageReminder(userID, pageData)
       }).then(function(reminders) {
         pageResults.reminders = reminders;
         console.log(3);
@@ -204,7 +204,7 @@ const Search = {
           ping.highlight = true;
         })
         pageResults.memories = pageResults.pings.concat(pageResults.memories)
-        pageResults.memories = self.removeDuplicates(pageResults.memories, 'objectID')
+        pageResults.memories = removeDuplicates(pageResults.memories, 'objectID')
         console.log(pageResults);
         d.resolve(pageResults)
       }).catch(function(e) {

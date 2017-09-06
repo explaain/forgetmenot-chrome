@@ -1,4 +1,7 @@
-import Search from '../mixins/search.js'
+import Vue from 'vue';
+
+import ExplaainSearch from '../plugins/explaain-search.js';
+
 
 const userIDs = {
   live: {
@@ -21,6 +24,12 @@ const userIDs = {
 const userID = userIDs.local.Jeremy;
 var pageResults = {};
 
+const algoliaParams = { // Need to send these to app.vue to avoid duplication!
+  appID: 'I2VKMNNAXI',
+  apiKey: '2b8406f84cd4cc507da173032c46ee7b',
+  index: 'ForgetMeNot_Context'
+}
+Vue.use(ExplaainSearch, algoliaParams)
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
@@ -29,7 +38,7 @@ chrome.runtime.onMessage.addListener(
                 "from the extension");
     if (request.action == "checkPage") {
       console.log(request.data);
-      Search.methods.getPageResults(userID, request.data)
+      ExplaainSearch.getPageResults(userID, request.data)
       .then(function(results) {
         console.log(results);
         pageResults = results;

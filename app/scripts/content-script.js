@@ -38,6 +38,7 @@ window.onload = function(e){
         + "background: white;"
         + "cursor: pointer;"
         + "line-height: 1.4;"
+        + "font-family: Arial, sans-serif;"
       const text1 = document.createTextNode("👆👆 " + (numPings==1 ? "One memory" : numPings+" memories") + " relevant to this page! 😃");
       pingDiv.appendChild(text1)
       var pageSpan = document.createElement("span");
