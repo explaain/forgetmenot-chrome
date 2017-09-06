@@ -9,12 +9,15 @@ const Search = {
 
     const advancedSearch = function(params) {
       const d = Q.defer()
-      AlgoliaIndex.search(params, function(err, content) {
-        if (err) {
-          console.log(err);
-          d.reject(err)
+      AlgoliaIndex.search(params, function(e, content) {
+        if (e) {
+          console.log(e);
+          d.reject(e)
         } else {
-          d.resolve(content.hits)
+          fetchListItemCards(content.hits)
+          .then(function() {
+            d.resolve(content.hits)
+          })
         }
       });
       return d.promise
@@ -34,6 +37,48 @@ const Search = {
         d.resolve(hits)
       }).catch(function(e) {
         d.reject(e);
+      })
+      return d.promise
+    }
+
+    const fetchListItemCards = function(cards) {
+      const d = Q.defer()
+      const self = this
+      const promises = []
+      cards.forEach(function(card) {
+        card.listCards = {}
+        if (card.listItems) {
+          card.listItems.forEach(function(key) {
+            const p = Q.defer()
+            getCard(key)
+            .then(function(content) {
+              card.listCards[key] = content;
+              p.resolve(content);
+            })
+            promises.push(p.promise)
+          })
+        }
+      })
+      console.log(promises);
+      Q.allSettled(promises)
+      .then(function(results) {
+        d.resolve(results);
+      }).catch(function(e) {
+        console.log(e);
+        d.reject(e)
+      })
+      return d.promise
+    }
+
+    const getCard = function(objectID) {
+      const d = Q.defer()
+      AlgoliaIndex.getObject(objectID, function(e, content) {
+        if (e) {
+          console.log(e);
+          d.reject(e)
+        } else {
+          d.resolve(content);
+        }
       })
       return d.promise
     }
@@ -117,6 +162,7 @@ const Search = {
 
     const checkPageReminder = function(userID, pageData) {
       const d = Q.defer()
+      console.log(pageData);
       const params = {
         query: '',
         filters: 'userID: ' + userID + ' AND triggerUrl: ' + pageData.baseUrl

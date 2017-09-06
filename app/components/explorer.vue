@@ -13,7 +13,7 @@
 
     <ul id="cards">
       <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
-        <card v-for="card in cards" @editCard="beginEdit" @deleteCard="beginDelete" v-bind:card="card" v-bind:key="card.objectID" @copy="copyAlert">
+        <card v-for="card in cards" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" @copy="copyAlert">
         </card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
       <!-- </isotope> -->

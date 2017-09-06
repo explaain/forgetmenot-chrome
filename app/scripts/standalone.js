@@ -2,7 +2,7 @@ import Vue from 'vue';
 import Explorer from '../components/explorer.vue';
 
 const props = {
-  userID: '1627888800569309',
+  userID: '1300120880110773',
   logo: "../images/logo.png",
   algoliaParams: {
     appID: 'I2VKMNNAXI',

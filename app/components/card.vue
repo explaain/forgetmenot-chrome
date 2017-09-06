@@ -5,6 +5,9 @@
     <div class="label"><icon name="clock-o"></icon> Memory</div>
     <p>{{card.sentence}}</p>
     <p>{{card.description}}</p>
+    <div class="list">
+      <cardlet v-for="item in card.listCards" :card="item" :key="item.objectID"></cardlet>
+    </div>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
     <footer>
       <div class="buttons">
@@ -19,6 +22,7 @@
 <script>
 import Vue from 'vue';
 import IconButton from './ibutton.vue';
+import Cardlet from './cardlet.vue';
 
 import Clipboards from 'vue-clipboards';
 import 'vue-awesome/icons';
@@ -35,7 +39,8 @@ export default {
   },
   components: {
     icon: Icon,
-    "ibutton": IconButton,
+    ibutton: IconButton,
+    cardlet: Cardlet,
   },
   methods: {
     editCard: function() {
@@ -104,6 +109,9 @@ export default {
   .card img {
     max-width: calc(100% - 10px);
     border-radius: 5px;
+  }
+  .card .list {
+    margin: 20px 0 10px;
   }
   footer {
     min-height: 20px;
