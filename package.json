@@ -14,7 +14,7 @@
     "dev:firefox": "gulp --watch --vendor=firefox",
     "dev:opera": "gulp --watch --vendor=opera"
   },
-  "devDependencies": {
+  "dependencies": {
     "babel-cli": "6.x.x",
     "babel-core": "^6.22.1",
     "babel-eslint": "6.x.x",
@@ -57,9 +57,7 @@
     "vueify-insert-css": "^1.0.0",
     "webpack": "^2.2.1",
     "webpack-stream": "3.x.x",
-    "yargs": "5.x.x"
-  },
-  "dependencies": {
+    "yargs": "5.x.x",
     "algoliasearch": "^3.24.3",
     "axios": "^0.16.2",
     "gulp-connect": "^5.0.0",
