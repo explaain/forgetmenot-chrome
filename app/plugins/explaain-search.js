@@ -95,7 +95,6 @@ const Search = {
         return searchCards(userID, t, hitsPerPage);
       });
       Q.allSettled(promises)
-      // promises[0]
       .then(function(results) {
         var results = [].concat.apply([], results.map(function(r) {return r.value}));
         results = removeDuplicates(results, 'objectID')
@@ -162,10 +161,12 @@ const Search = {
     const checkPageReminder = function(userID, pageData) {
       const d = Q.defer()
       console.log(pageData);
+      const urlRoot = pageData.baseUrl.replace('.com','').replace('.co.uk','').replace('.org','')
       const params = {
         query: '',
-        filters: 'userID: ' + userID + ' AND triggerUrl: ' + pageData.baseUrl
+        filters: 'userID: ' + userID + ' AND (triggerUrl: ' + urlRoot + ' OR triggerUrl: ' + urlRoot + '.com OR triggerUrl: ' + urlRoot + '.co.uk OR triggerUrl: ' + urlRoot + '.org)'
       };
+      console.log('params');
       console.log(params);
       advancedSearch(params)
       .then(function(reminders) {

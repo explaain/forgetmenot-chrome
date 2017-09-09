@@ -21,8 +21,8 @@ const userIDs = {
   }
 }
 
-const userID = userIDs.local.Jeremy;
-var pageResults = {};
+const userID = userIDs.live.Jeremy;
+var pageResults = false;
 
 const algoliaParams = { // Need to send these to app.vue to avoid duplication!
   appID: 'I2VKMNNAXI',
@@ -46,20 +46,27 @@ chrome.runtime.onMessage.addListener(
       })
       return true;
     }
+    if(request.action == "getUser"){
+      sendResponse(userID);
+    }
+    if(request.action == "getPageResults"){
+      if (!pageResults) {
+        console.log('Haven\'t yet fetched pageResults!');
+        // ExplaainSearch.getPageResults(userID, request.data)
+        // .then(function(results) {
+        //   console.log(results);
+        //   pageResults = results;
+        //   sendResponse(results);
+        // })
+      } else {
+        console.log('pageResults');
+        console.log(pageResults);
+        sendResponse(pageResults);
+      }
+    }
+    if(request.event == "popupOpened"){
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+        chrome.tabs.sendMessage(tabs[0].id, {event: 'popupOpened'}, function(response) {});
+      });
+    }
   });
-
-
-
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if(request.action == "getUser"){
-    sendResponse(userID);
-  }
-  if(request.action == "getPageResults"){
-    sendResponse(pageResults);
-  }
-  if(request.event == "popupOpened"){
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-      chrome.tabs.sendMessage(tabs[0].id, {event: 'popupOpened'}, function(response) {});
-    });
-  }
-})

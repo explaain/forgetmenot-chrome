@@ -6,10 +6,12 @@ gulp.task('build', gulpSequence(
     'manifest',
     'scripts',
     'styles',
+    'root',
     'pages',
     'locales',
     'images',
     'fonts',
-    'chromereload'
+    'chromereload',
+    'connect'
   ]
 ));

@@ -8,3 +8,9 @@ gulp.task('pages', () => {
     .pipe(gulp.dest(`dist/${args.vendor}/pages`))
     .pipe(gulpif(args.watch, livereload()));
 });
+
+gulp.task('root', () => {
+  return gulp.src('app/*.html')
+    .pipe(gulp.dest(`dist/${args.vendor}`))
+    .pipe(gulpif(args.watch, livereload()));
+});

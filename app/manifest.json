@@ -10,7 +10,9 @@
     "48": "images/icon48.png"
   },
   "content_scripts" : [{
-    "matches" : [ "*://*/*"],
+    "matches" : [
+      "*://*/*"
+    ],
     "js" : ["scripts/content-script.js"]
   }],
   "background": {
