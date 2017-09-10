@@ -4,7 +4,7 @@ var gulp = require('gulp'),
 gulp.task('connect', function() {
   connect.server({
     root: 'dist/chrome',
-    process.env.PORT || 8000,
+    port: process.env.PORT || 8000,
     livereload: false
   });
 });
