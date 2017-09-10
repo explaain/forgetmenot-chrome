@@ -2,11 +2,12 @@ var gulp = require('gulp'),
   connect = require('gulp-connect');
 
 gulp.task('connect', function() {
-  connect.server({
-    root: 'dist/chrome',
-    port: 8000,
-    livereload: true
-  });
+  // connect.server({
+  //   root: 'dist/chrome',
+  //   port: 8000,
+  //   livereload: true
+  // });
+  connect.server();
 });
 
 gulp.task('default', ['connect']);

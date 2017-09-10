@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "chrome extesion with vue",
   "scripts": {
-    "start": "npm run dev:chrome",
+    "start": "npm run build:chrome",
     "build": "npm run build:chrome",
     "build:chrome": "gulp --production --vendor=chrome && gulp pack --vendor=chrome",
     "build:firefox": "gulp --production --vendor=firefox && gulp pack --vendor=firefox",
