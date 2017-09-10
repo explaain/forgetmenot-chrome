@@ -42,7 +42,7 @@ const sendPageText = function() {
         + "position: fixed;"
         + "top: 0;"
         + "right: 0;"
-        + "width: 250px;"
+        + "width: 300px;"
         + "margin: 20px;"
         + "padding: 20px 35px;"
         + "font-size: 16px;"
