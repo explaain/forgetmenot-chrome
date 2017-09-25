@@ -1,9 +1,12 @@
-import Vue from 'vue';
+import Vue from 'vue'
+import log from 'loglevel'
+import Q from 'q'
 
 import ExplaainSearch from '../plugins/explaain-search.js';
 
+log.setLevel('debug')
 
-const userIDs = {
+const UserIDs = {
   live: {
     Jeremy: '1627888800569309',
     Matt: '1455707247850069',
@@ -21,8 +24,10 @@ const userIDs = {
   }
 }
 
-const userID = userIDs.live.Matt;
-var pageResults = false;
+const UserID = UserIDs.live.Matt
+var PageResults = {}
+var UserCards = []
+var LastRefresh = 0
 
 const algoliaParams = { // Need to send these to app.vue to avoid duplication!
   appID: 'I2VKMNNAXI',
@@ -31,42 +36,139 @@ const algoliaParams = { // Need to send these to app.vue to avoid duplication!
 }
 Vue.use(ExplaainSearch, algoliaParams)
 
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    console.log(sender.tab ?
-                "from a content script:" + sender.tab.url :
-                "from the extension");
+
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  try {
+    log.debug((sender.tab ? "From a content script: " + sender.tab.url : "From the extension"), request)
+
+    if(request.action == "getPageResults"){
+      getCurrentPageResults()
+      .then(function(res) {
+        log.debug(res)
+        sendResponse(res)
+      })
+      return true;
+    }
     if (request.action == "checkPage") {
-      console.log(request.data);
-      ExplaainSearch.getPageResults(userID, request.data)
-      .then(function(results) {
-        console.log(results);
-        pageResults = results;
-        sendResponse(results);
+      log.trace(request.data);
+      checkRefresh()
+      .then(function() {
+        return ExplaainSearch.getPageResults(UserID, request.data, UserCards)
+      }).then(function(res) {
+        addToPageResults(sender.tab.id, res)
+        PageResults = res;
+        sendResponse(res);
+      }).catch(function(e) {
+        log.error(e)
       })
       return true;
     }
     if(request.action == "getUser"){
-      sendResponse(userID);
+      sendResponse(UserID);
+      return true;
     }
-    if(request.action == "getPageResults"){
-      if (!pageResults) {
-        console.log('Haven\'t yet fetched pageResults!');
-        // ExplaainSearch.getPageResults(userID, request.data)
-        // .then(function(results) {
-        //   console.log(results);
-        //   pageResults = results;
-        //   sendResponse(results);
-        // })
-      } else {
-        console.log('pageResults');
-        console.log(pageResults);
-        sendResponse(pageResults);
-      }
+    if(request.action == "refreshCards"){
+      getAllUserCards()
+      return true;
     }
     if(request.event == "popupOpened"){
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         chrome.tabs.sendMessage(tabs[0].id, {event: 'popupOpened'}, function(response) {});
       });
+      return true;
     }
-  });
+  } catch(e) {
+    log.error(e)
+  }
+})
+
+const getCurrentPageResults = function() {
+  const d = Q.defer()
+  var tabID;
+  checkRefresh()
+  .then(getCurrentTab)
+  .then(function(tab) {
+    const data = {action: 'getPageData'}
+    tabID = tab.id
+    if (PageResults[tabID]) {
+      d.resolve(PageResults[tabID])
+    } else {
+      sendMessageToTab(tabID, data)
+      .then(function(res) {
+        return ExplaainSearch.getPageResults(UserID, res, UserCards)
+      }).then(function(res) {
+        addToPageResults(tabID, res)
+        d.resolve(res)
+      }).catch(function(e) {
+        d.reject(e)
+      })
+    }
+  }).catch(function(e) {
+    d.reject(e)
+  })
+  return d.promise
+}
+
+const getCurrentTab = function() {
+  // Need error catching here
+  const d = Q.defer()
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+    d.resolve(tabs[0])
+  })
+  return d.promise
+}
+
+const sendMessageToTab = function(tabID, data) {
+  // Need error catching here
+  const d = Q.defer()
+  chrome.tabs.sendMessage(tabID, data, function(res) {
+    log.debug(res)
+    d.resolve(res)
+  })
+  return d.promise
+}
+
+const addToPageResults = function(tabID, data) {
+  PageResults[tabID] = data
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+    Object.keys(PageResults).forEach(function(pageTabID) {
+      if ( tabs.filter(function(tab) {return tab.id == pageTabID}).length == 0 )
+        delete PageResults[pageTabID]
+    })
+    log.debug(PageResults)
+  })
+}
+
+const checkRefresh = function() {
+  const d = Q.defer()
+  const now = new Date()
+  if (now - LastRefresh > 300000) {
+    getAllUserCards()
+    .then(function() {
+      d.resolve()
+    }).catch(function(e) {
+      log.error(e)
+      d.reject(e)
+    })
+  } else {
+    d.resolve()
+  }
+  return d.promise
+}
+
+const getAllUserCards = function() {
+  const d = Q.defer()
+  LastRefresh = new Date()
+  ExplaainSearch.searchCards(UserID, '', 1000)
+  .then(function(results) {
+    UserCards = results;
+    log.debug(UserCards);
+    d.resolve()
+  }).catch(function(e) {
+    log.error(e)
+    d.reject(e)
+  })
+  return d.promise
+}
+getAllUserCards()

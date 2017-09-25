@@ -1,9 +1,16 @@
+import log from 'loglevel';
 import Q from 'q';
 import Algolia from 'algoliasearch';
 
+log.setLevel('debug')
+
+const escapeRegExp = function(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
 const Search = {
   install(Vue, options) {
-    console.log(options);
+    log.trace(options);
     const AlgoliaClient = Algolia(options.appID, options.apiKey);
     const AlgoliaIndex = AlgoliaClient.initIndex(options.index);
 
@@ -11,7 +18,7 @@ const Search = {
       const d = Q.defer()
       AlgoliaIndex.search(params, function(e, content) {
         if (e) {
-          console.log(e);
+          log.trace(e);
           d.reject(e)
         } else {
           fetchListItemCards(content.hits)
@@ -30,10 +37,10 @@ const Search = {
         filters: userID.length ? 'userID: ' + userID : '',
         hitsPerPage: hitsPerPage || null
       };
-      console.log(params);
+      log.trace(params);
       advancedSearch(params)
       .then(function(hits) {
-        console.log(hits);
+        log.trace(hits);
         d.resolve(hits)
       }).catch(function(e) {
         d.reject(e);
@@ -59,12 +66,12 @@ const Search = {
           })
         }
       })
-      console.log(promises);
+      log.trace(promises);
       Q.allSettled(promises)
       .then(function(results) {
         d.resolve(results);
       }).catch(function(e) {
-        console.log(e);
+        log.trace(e);
         d.reject(e)
       })
       return d.promise
@@ -74,7 +81,7 @@ const Search = {
       const d = Q.defer()
       AlgoliaIndex.getObject(objectID, function(e, content) {
         if (e) {
-          console.log(e);
+          log.trace(e);
           d.reject(e)
         } else {
           d.resolve(content);
@@ -98,11 +105,11 @@ const Search = {
       .then(function(results) {
         var results = [].concat.apply([], results.map(function(r) {return r.value}));
         results = removeDuplicates(results, 'objectID')
-        console.log(results);
+        log.trace(results);
         d.resolve(results)
       })
       .catch(function(e) {
-        console.log(e);
+        log.trace(e);
       });
       return d.promise
     }
@@ -126,6 +133,7 @@ const Search = {
         'world',
         'name',
         'this',
+        'plan',
         'need',
         'best',
         'like',
@@ -137,41 +145,48 @@ const Search = {
       ]
       const hits = [];
       results.forEach(function(result, i) {
+        log.trace('---');
+        log.trace(i);
         var count = [];
         result.context.forEach(function(c) {
           if (pageData.pageText.indexOf(c.value) > -1
           && hits.indexOf(result.objectID) == -1
-          && c.value.length > 3
+          && c.value && c.value.length > 3
           && boringWords.indexOf(c.value) == -1
           && count.indexOf(c.value) == -1) {
-            console.log(c.value);
+            log.trace(c.value);
             count.push(c.value);
+            (c.value.match(/ /g) || []).forEach(function() {
+              count.push(c.value);
+            })
           }
         })
-        if (count.length > 1) {
-          console.log(result.sentence);
+        if (count.length > 2) {
+          log.trace(result.sentence);
           hits.push(result)
         }
+        log.trace('---');
       })
 
+      // return hits;
       //Force no hits
       return [];
     }
 
     const checkPageReminder = function(userID, pageData) {
       const d = Q.defer()
-      console.log(pageData);
+      log.trace(pageData);
       const urlRoot = pageData.baseUrl.replace('.com','').replace('.co.uk','').replace('.org','')
       const params = {
         query: '',
         filters: 'userID: ' + userID + ' AND (triggerUrl: ' + urlRoot + ' OR triggerUrl: ' + urlRoot + '.com OR triggerUrl: ' + urlRoot + '.co.uk OR triggerUrl: ' + urlRoot + '.org)'
       };
-      console.log('params');
-      console.log(params);
+      log.trace('params');
+      log.trace(params);
       advancedSearch(params)
       .then(function(reminders) {
-        console.log('reminders');
-        console.log(reminders);
+        log.trace('reminders');
+        log.trace(reminders);
         d.resolve(reminders)
       }).catch(function(e) {
         d.reject(e)
@@ -179,39 +194,138 @@ const Search = {
       return d.promise
     }
 
-    const getPageResults = function(userID, pageData) {
+    const getPageResults = function(userID, pageData, allUserCards) {
       const d = Q.defer()
       // Gets all results
-      const pageResults = {};
-      console.log(userID, pageData);
-      compoundSearch(userID, pageData.pageText)
-      .then(function(results) {
-        console.log(1);
-        console.log(results);
-        pageResults.memories = results;
-        // Checks whether a ping is required
-        pageResults.hits = checkPageHit(pageData, results);
-        console.log(2);
-        console.log(pageResults.hits);
-        return checkPageReminder(userID, pageData)
-      }).then(function(reminders) {
-        pageResults.reminders = reminders;
-        console.log(3);
-        console.log(pageResults.reminders);
-        // Returns results plus ping
-        pageResults.pings = pageResults.reminders.concat(pageResults.hits)
-        pageResults.pings.forEach(function(ping) {
-          console.log(ping.objectID);
-          ping.highlight = true;
+      const pageResults = {
+        hits: [],
+        reminders: [],
+        pings: [],
+        memories: [],
+      };
+      log.trace(userID, pageData);
+      const gmailBoringPhrases = [
+        'Skip to content',
+        'Using',
+        'with screen readers',
+        'Search',
+        'Mail',
+        'COMPOSE',
+        'Labels',
+        'Inbox',
+        'Starred',
+        'Sent Mail',
+        'Drafts',
+        'More',
+        '---------- Forwarded message ----------',
+        'From: ',
+        'Date: ',
+        'Subject: ',
+        'To: ',
+        'Click here to Reply or Forward',
+        'GB',
+        'GB used',
+        'Manage',
+        'Program Policies',
+        'Powered by Google',
+        'Last account activity:',
+        'hour ago',
+        'hours ago',
+        'Details',
+      ]
+      gmailBoringPhrases.forEach(function(phrase) {
+        pageData.pageText = pageData.pageText.replace(phrase, '')
+      })
+      const boringWords = [
+        "i",
+        "a",
+        "of",
+        "me",
+        "my",
+        "is",
+        "im",
+        "so",
+        "all",
+        "get",
+        "how",
+        "new",
+        "out",
+        "the",
+        "use",
+        "best",
+        "name",
+        "next",
+        "take",
+        "what",
+        "image",
+        "something",
+      ]
+
+      try {
+        const allWords = []
+        allUserCards.forEach(function(card) {
+          var score = 0
+          card.context.forEach(function(entity) {
+            const val = String(entity.value)
+            if (boringWords.indexOf(val.toLowerCase()) == -1 && val.length > 1) {
+              const reg = new RegExp(escapeRegExp(val), "gi");
+              const points = (pageData.pageText.match(reg) || []).length * val.length
+              score += points
+              if (points) {
+                if (allWords.indexOf(val) == -1) allWords.push(val)
+              }
+            }
+          })
+          if (score > 100) {
+            pageResults.hits.push(card)
+          } else if (score > 0) {
+            pageResults.memories.push(card)
+          }
         })
+        log.debug(allWords)
+
+        pageResults.reminders = allUserCards.filter(function(card) {
+          const urlRoot = pageData.baseUrl.replace('.com','').replace('.co.uk','').replace('.org','')
+          return card.triggerURL && (card.triggerURL.indexOf(urlRoot) > -1 || card.triggerUrl.indexOf(urlRoot) > -1)
+        })
+        pageResults.pings = pageResults.reminders.concat(pageResults.hits)
+        pageResults.pings.forEach(function(ping) { ping.highlight = true })
         pageResults.memories = pageResults.pings.concat(pageResults.memories)
         pageResults.memories = removeDuplicates(pageResults.memories, 'objectID')
-        console.log(pageResults);
+        log.debug(pageResults);
         d.resolve(pageResults)
-      }).catch(function(e) {
-        console.log(e);
-        d.reject(e)
-      })
+      } catch(e) {
+        log.error(e)
+      }
+
+      // compoundSearch(userID, pageData.pageText)
+      // .then(function(results) {
+      //   log.trace(1);
+      //   log.trace(results);
+      //   pageResults.memories = results;
+      //   // Checks whether a ping is required
+      //   pageResults.hits = checkPageHit(pageData, results);
+      //   log.trace(2);
+      //   log.trace(pageResults.hits);
+      //   return checkPageReminder(userID, pageData)
+      // }).then(function(reminders) {
+      //   pageResults.reminders = reminders;
+      //   log.trace(3);
+      //   log.trace(pageResults.reminders);
+      //   // Returns results plus ping
+      //   pageResults.pings = pageResults.reminders.concat(pageResults.hits)
+      //   pageResults.pings.forEach(function(ping) {
+      //     log.trace(ping.objectID);
+      //     ping.highlight = true;
+      //   })
+      //   pageResults.memories = pageResults.pings.concat(pageResults.memories)
+      //   pageResults.memories = removeDuplicates(pageResults.memories, 'objectID')
+      //   log.trace(pageResults);
+      //   d.resolve(pageResults)
+      // }).catch(function(e) {
+      //   log.trace(e);
+      //   d.reject(e)
+      // })
       return d.promise
     }
 

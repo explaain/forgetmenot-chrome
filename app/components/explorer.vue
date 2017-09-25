@@ -39,6 +39,7 @@
   import Icon from 'vue-awesome/components/Icon.vue';
 
 
+
   export default {
     props: [
       'userID',
@@ -124,11 +125,21 @@
         this.modal.text = text;
       },
       beginDelete: function(objectID) {
+        const self = this
         const data = {
           sender: this.userID,
           objectID: objectID,
         }
+        console.log(19191);
         ExplaainAuthor.deleteCard(data)
+        .then(function() {
+          console.log('Deletion complete')
+          self.cards.forEach(function(card, i) { //temporary - doesn't check to see whether it's actually been deleted!
+            if (card.objectID == objectID) {
+              self.cards.splice(i,1)
+            }
+          })
+        })
         // this.modal = {
         //   show: true,
         //   submit: ExplaainAuthor.deleteCard,

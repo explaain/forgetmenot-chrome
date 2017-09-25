@@ -57,9 +57,11 @@ const Author = {
         self.query = '';
         // self.cards = [];
         // self.showAlert('success', 2000, 'Card deleted!')
-        data.callback();
+        d.resolve()
+        // data.callback();
       }).catch(function (e) {
         console.log(e);
+        d.reject()
       });
       return d.promise
     }

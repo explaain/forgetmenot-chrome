@@ -1,4 +1,5 @@
-console.log('working');
+import log from 'loglevel';
+log.setLevel('debug')
 
 const getPageText = function() {
   return document.body.innerText;
@@ -8,6 +9,12 @@ const getUrl = function() {
 }
 const getBaseUrl = function() {
   return window.location.host.replace('www.','');
+}
+const collectPageData = function() {
+  const pageText = getPageText();
+  const url = getUrl();
+  const baseUrl = getBaseUrl();
+  return {url: url, baseUrl: baseUrl, pageText: pageText}
 }
 
 
@@ -20,20 +27,20 @@ window.onload = function(e){
 }
 
 const sendPageText = function() {
-  console.log(123);
+  log.trace(sendPageText);
   const pageText = getPageText();
   const url = getUrl();
   const baseUrl = getBaseUrl();
-  console.log([pageText]);
-  console.log(url);
+  log.trace([pageText]);
+  log.debug(url);
   chrome.runtime.sendMessage({action: "checkPage", data: {url: url, baseUrl: baseUrl, pageText: pageText}}, function(response) {
-    console.log(response);
+    log.debug(response);
     const numPings = response.pings.length
-    console.log("numPings: ", numPings);
+    log.debug("numPings: ", numPings);
     if (numPings) {
       const existingPings = document.getElementsByClassName('forget-me-not-ping');
       while(existingPings.length > 0){
-        console.log('Deleting existing ping');
+        log.trace('Deleting existing ping');
         existingPings[0].parentNode.removeChild(existingPings[0]);
       }
       if (pingDiv) pingDiv.remove();
@@ -75,18 +82,23 @@ const sendPageText = function() {
         pingDiv.remove();
       };
       document.body.appendChild(pingDiv);
-      console.log(pingDiv);
+      log.trace(pingDiv);
     }
   });
 }
 
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse){
-  if(request.action == "getPageText"){
-    const pageText = getPageText();
-    sendResponse(pageText);
+  log.trace('Request received');
+  if(request.action == "getPageData"){
+    log.debug('1')
+    log.trace('Received getPageData request');
+    const pageData = collectPageData()
+    log.debug(pageData)
+    sendResponse(pageData)
   }
   if(request.event == "popupOpened"){
+    log.trace('Received popupOpened event');
     if (pingDiv) pingDiv.remove();
   }
 })

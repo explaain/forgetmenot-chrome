@@ -52,17 +52,17 @@
           });
         } catch(e) {
           this.plugin = false;
-          self.userID = '1627888800569309';
+          self.userID = '1528134990563202';
         }
       },
       fromPage: function() {
         console.log('fromPage');
         const self = this;
-        if (self.pageCards.length) {
-          console.log(self.pageCards);
-          console.log(1);
-          self.updateCards(self.pageCards, "No cards found from page")
-        } else {
+        // if (self.pageCards.length) {
+        //   console.log(self.pageCards);
+        //   console.log(1);
+        //   self.updateCards(self.pageCards, "No cards found from page")
+        // } else {
           chrome.runtime.sendMessage({action: "getPageResults", event: "popupOpened"}, function(pageResults) {
             console.log(22);
             console.log(pageResults);
@@ -73,7 +73,7 @@
               self.updateCards(self.pageCards, "No cards found from page")
             }
           });
-        }
+        // }
       },
       updateCards: function(cards, noCardMessage) {
         console.log(cards);
