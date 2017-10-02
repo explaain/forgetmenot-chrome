@@ -13,7 +13,9 @@
     "matches" : [
       "*://*/*"
     ],
-    "js" : ["scripts/content-script.js"]
+    "js" : [
+      "scripts/content-script.js"
+    ]
   }],
   "background": {
     "scripts": [
@@ -25,9 +27,12 @@
     "default_icon": {
       "48": "images/icon48.png"
     },
-    "default_title": "__MSG_browserActionTitle__",
-    "default_popup": "pages/popup.html"
+    "default_title": "__MSG_browserActionTitle__"
   },
+  "content_security_policy": "script-src 'self' https://apis.google.com/; object-src 'self'",
+  "web_accessible_resources": [
+    "pages/popup.html"
+  ],
   "permissions": [
     "bookmarks",
     "clipboardRead",

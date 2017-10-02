@@ -19,6 +19,7 @@ const collectPageData = function() {
 
 
 var pingDiv;
+const drawer = document.createElement("div")
 
 // document.addEventListener("DOMContentLoaded", function(){ sendPageText(); }, false);
 
@@ -37,7 +38,7 @@ const sendPageText = function() {
     log.debug(response);
     const numPings = response.pings.length
     log.debug("numPings: ", numPings);
-    if (numPings) {
+    if (numPings && pingDiv != -1) {
       const existingPings = document.getElementsByClassName('forget-me-not-ping');
       while(existingPings.length > 0){
         log.trace('Deleting existing ping');
@@ -76,10 +77,12 @@ const sendPageText = function() {
         + "color: grey;"
         + "font-style: italic;"
         + "margin-left: 5px;"
-      pageSpan.innerHTML = "Click to dismiss";
+      pageSpan.innerHTML = "Click to view";
       pingDiv.appendChild(pageSpan)
-      pingDiv.onclick = function(){
+      pingDiv.onclick = function(e){
+        openDrawer(e);
         pingDiv.remove();
+        pingDiv = -1
       };
       document.body.appendChild(pingDiv);
       log.trace(pingDiv);
@@ -101,6 +104,119 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse){
     log.trace('Received popupOpened event');
     if (pingDiv) pingDiv.remove();
   }
+  if(request.action == "toggleDrawer"){
+    log.trace('Received toggleDrawer action');
+    toggleDrawer()
+  }
 })
 
 sendPageText();
+
+
+
+const createDrawer = function() {
+  try {
+    drawer.style.cssText = ""
+      + "position: fixed;"
+      + "top: 0;"
+      + "right: -400px;"
+      + "height: 100%;"
+      + "width: 400px;"
+      + "z-index: 1000000000000000;"
+      + "background: white;"
+      + "box-shadow: rgba(0, 0, 0, 0.4) -1px 3px 50px 0px;"
+      + "transition: all 0.6s ease 0s;";
+    drawer.setAttribute('data-opened', 'false')
+
+    const iframe = document.createElement('iframe')
+    iframe.src = chrome.runtime.getURL('../pages/popup.html')
+    iframe.id = 'forgetmenot-frame'
+    iframe.style.cssText = ""
+      + "width: 100%;"
+      + "height: 100%;"
+      + "border: none;"
+
+    const close = document.createElement('a')
+    close.style.cssText = ""
+      + "position: absolute;"
+      + "top: 6px;"
+      + "left: 4px;"
+      + "z-index: 2147483647;"
+      + "font-size: 20px;"
+      + "color: #999;"
+      + "font-family: Arial;"
+      + "border-radius: 6px;"
+      + "padding: 0px 9px 2px;"
+      + "cursor: pointer;"
+      + "font-weight: bold;"
+    close.appendChild(document.createTextNode('x'))
+
+    // Click Events
+    close.onclick = function(e) {
+        closeDrawer(e)
+    };
+    document.addEventListener('click', function(event) {
+      // log.info(pingDiv)
+      var isClickInside = drawer.contains(event.target) || (pingDiv && pingDiv != -1 && pingDiv.contains(event.target));
+
+      if (!isClickInside) {
+        closeDrawer(event)
+      }
+    });
+
+    drawer.appendChild(close);
+    drawer.appendChild(iframe);
+    document.body.appendChild(drawer);
+    log.info(drawer)
+  } catch(e) {
+    log.error(e)
+  }
+}
+const displayPageResults = function() {
+  log.info('Sending setLoading to frame')
+  window.frames['forgetmenot-frame'].contentWindow.postMessage({action: 'setLoading'}, "*");
+  chrome.runtime.sendMessage({action: "getPageResults", data: {pageData: collectPageData()}}, function(response) {
+    const message = {action: "updatePageResults", data: {pageResults: response}}
+    log.info(message)
+    window.frames['forgetmenot-frame'].contentWindow.postMessage(message, "*");
+  })
+}
+const openDrawer = function(e) {
+  // log.info(drawer.getAttribute('data-opened'))
+  if (drawer.getAttribute('data-opened') != 'true' && (!e || !e.dealtWith)) {
+    displayPageResults()
+    drawer.style.right = '0px'
+    drawer.setAttribute('data-opened', 'true')
+    log.info(drawer.getAttribute('data-opened'))
+  }
+  if (e) e.dealtWith = true
+}
+const closeDrawer = function(e) {
+  // log.info(drawer.getAttribute('data-opened'))
+  if (drawer.getAttribute('data-opened') == 'true' && (!e || !e.dealtWith)) {
+    drawer.style.right = '-' + drawer.style.width
+    drawer.setAttribute('data-opened', 'false')
+  }
+  // log.info(drawer.getAttribute('data-opened'))
+  if (e) e.dealtWith = true
+}
+const toggleDrawer = function(e) {
+  if (drawer.getAttribute('data-opened') == 'true') {
+    closeDrawer(e)
+  } else {
+    openDrawer(e)
+  }
+}
+
+window.addEventListener('message', function(event) {
+  switch (event.data.action) {
+    case 'getPageResults':
+    log.info(5)
+      displayPageResults()
+      break;
+    default:
+
+  }
+}, false);
+
+createDrawer()

@@ -10,3 +10,10 @@ gulp.task('images', () => {
     .pipe(gulp.dest(`dist/${args.vendor}/images`))
     .pipe(gulpif(args.watch, livereload()));
 });
+
+gulp.task('favicon', () => {
+  return gulp.src('app/*.ico')
+    .pipe(gulpif(args.production, imagemin()))
+    .pipe(gulp.dest(`dist/${args.vendor}`))
+    .pipe(gulpif(args.watch, livereload()));
+});

@@ -40,7 +40,9 @@ gulp.task('scripts', (cb) => {
         }],
         loaders: [{
           test: /\.js$/,
-          loader: 'babel'
+          loader: 'babel',
+          exclude: /firebaseui/
+          // exclude: /node_modules/
         },{
           test: /\.vue$/,
           loader: 'vue-loader'

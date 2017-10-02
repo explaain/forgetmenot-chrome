@@ -8,8 +8,19 @@ Vue.use(VueAxios, axios)
 const Author = {
   install(Vue, options) {
     console.log(options);
-    const url = options.url;
+    var url = options.url;
     console.log(url);
+
+    const importFromDrive = function(user) {
+      const d = Q.defer()
+      Vue.axios.post(options.importUrl, user)
+      .then((response) => {
+        d.resolve(response)
+      }).catch(function(e) {
+        console.log(e);
+      })
+      return d.promise
+    }
 
     const createCard = function(data) {
       const d = Q.defer()
@@ -22,7 +33,7 @@ const Author = {
         console.log(response)
         // self.showAlert('success', 2000, 'Card created!')
         data.callback();
-      }).catch(function (e) {
+      }).catch(function(e) {
         console.log(e);
       });
       return d.promise
@@ -66,6 +77,7 @@ const Author = {
       return d.promise
     }
 
+    this.importFromDrive = importFromDrive;
     this.createCard = createCard;
     this.editCard = editCard;
     this.deleteCard = deleteCard;

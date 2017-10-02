@@ -11,11 +11,14 @@ const escapeRegExp = function(str) {
 const Search = {
   install(Vue, options) {
     log.trace(options);
-    const AlgoliaClient = Algolia(options.appID, options.apiKey);
+    const AlgoliaClient = Algolia(options.appID, options.apiKey, {
+      protocol: 'https:'
+    })
     const AlgoliaIndex = AlgoliaClient.initIndex(options.index);
 
     const advancedSearch = function(params) {
       const d = Q.defer()
+      AlgoliaIndex.clearCache()
       AlgoliaIndex.search(params, function(e, content) {
         if (e) {
           log.trace(e);
@@ -179,7 +182,7 @@ const Search = {
       const urlRoot = pageData.baseUrl.replace('.com','').replace('.co.uk','').replace('.org','')
       const params = {
         query: '',
-        filters: 'userID: ' + userID + ' AND (triggerUrl: ' + urlRoot + ' OR triggerUrl: ' + urlRoot + '.com OR triggerUrl: ' + urlRoot + '.co.uk OR triggerUrl: ' + urlRoot + '.org)'
+        filters: 'userID: ' + userID + ' AND (triggerUrl: ' + urlRoot + ' OR triggerUrl: ' + urlRoot + '.com OR triggerUrl: ' + urlRoot + '.co.uk OR triggerUrl: ' + urlRoot + '.org OR triggerURL: ' + urlRoot + ' OR triggerURL: ' + urlRoot + '.com OR triggerURL: ' + urlRoot + '.co.uk OR triggerURL: ' + urlRoot + '.org)'
       };
       log.trace('params');
       log.trace(params);
@@ -286,11 +289,12 @@ const Search = {
 
         pageResults.reminders = allUserCards.filter(function(card) {
           const urlRoot = pageData.baseUrl.replace('.com','').replace('.co.uk','').replace('.org','')
-          return card.triggerURL && (card.triggerURL.indexOf(urlRoot) > -1 || card.triggerUrl.indexOf(urlRoot) > -1)
+          log.info(card.triggerURL)
+          return card.triggerURL && (card.triggerURL.indexOf(urlRoot) > -1 || card.triggerURL.indexOf(urlRoot) > -1)
         })
-        pageResults.pings = pageResults.reminders.concat(pageResults.hits)
+        pageResults.pings = pageResults.reminders //.concat(pageResults.hits)
         pageResults.pings.forEach(function(ping) { ping.highlight = true })
-        pageResults.memories = pageResults.pings.concat(pageResults.memories)
+        // pageResults.memories = pageResults.pings.concat(pageResults.memories)
         pageResults.memories = removeDuplicates(pageResults.memories, 'objectID')
         log.debug(pageResults);
         d.resolve(pageResults)

@@ -21,10 +21,13 @@ const UserIDs = {
   local: {
     Jeremy: '1300120880110773',
     Matt: '1428419100528438',
+  },
+  drive: {
+    Jeremy: '104380110279658920175'
   }
 }
 
-const UserID = UserIDs.live.Matt
+const UserID = UserIDs.drive.Jeremy
 var PageResults = {}
 var UserCards = []
 var LastRefresh = 0
@@ -36,14 +39,20 @@ const algoliaParams = { // Need to send these to app.vue to avoid duplication!
 }
 Vue.use(ExplaainSearch, algoliaParams)
 
-
+chrome.browserAction.onClicked.addListener(function(tab) {
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+    chrome.tabs.sendMessage(tabs[0].id, {action: 'toggleDrawer'}, function(res) {
+      log.info(res)
+    })
+  })
+});
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   try {
     log.debug((sender.tab ? "From a content script: " + sender.tab.url : "From the extension"), request)
 
     if(request.action == "getPageResults"){
-      getCurrentPageResults()
+      getCurrentPageResults(request.data)
       .then(function(res) {
         log.debug(res)
         sendResponse(res)
@@ -83,21 +92,27 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 })
 
-const getCurrentPageResults = function() {
+const getCurrentPageResults = function(data) {
   const d = Q.defer()
   var tabID;
+  log.debug(1)
   checkRefresh()
   .then(getCurrentTab)
   .then(function(tab) {
-    const data = {action: 'getPageData'}
+    log.debug(tab.id)
     tabID = tab.id
+    log.debug(PageResults)
     if (PageResults[tabID]) {
       d.resolve(PageResults[tabID])
     } else {
-      sendMessageToTab(tabID, data)
+      if (!data) data = {tabID: tabID}
+      log.debug(data)
+      getPageData(data)
       .then(function(res) {
+        log.debug(res)
         return ExplaainSearch.getPageResults(UserID, res, UserCards)
       }).then(function(res) {
+        log.debug(res)
         addToPageResults(tabID, res)
         d.resolve(res)
       }).catch(function(e) {
@@ -116,6 +131,21 @@ const getCurrentTab = function() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
     d.resolve(tabs[0])
   })
+  return d.promise
+}
+
+const getPageData = function(data) {
+  const d = Q.defer()
+  if (data.pageData) {
+    d.resolve(data.pageData)
+  } else if (data.tabID) {
+    sendMessageToTab(tabID, {action: 'getPageData'})
+    .then(function(res) {
+      d.resolve(res)
+    })
+  } else {
+    d.reject()
+  }
   return d.promise
 }
 

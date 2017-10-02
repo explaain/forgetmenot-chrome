@@ -64,7 +64,7 @@ export default {
     vertical-align: top;
     margin: 20px;
     width: calc(100% - 50px);
-    max-width: 400px;
+    max-width: 320px;
     min-height: 80px;
     padding: 15px 15px 40px 15px;
     border: 1px solid #ddd;

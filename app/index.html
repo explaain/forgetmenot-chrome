@@ -3,10 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <title>Forget Me Not</title>
-
+  <link rel="stylesheet" href="/styles/firebaseui.css">
 </head>
 <body>
   <div id="app"></div>
-  <script src="scripts/standalone.js"></script>
+
+  <!--Add buttons to initiate auth sequence and sign out-->
+	<button id="authorize-button" style="display: none;">Authorize</button>
+	<button id="signout-button" style="display: none;">Sign Out</button>
+
+	<pre id="content"></pre>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="/scripts/popup.js"></script>
+
+</body>
+</html>
+
 </body>
 </html>
