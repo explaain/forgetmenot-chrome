@@ -23,11 +23,12 @@ const UserIDs = {
     Matt: '1428419100528438',
   },
   drive: {
-    Jeremy: '104380110279658920175'
+    Jeremy: '104380110279658920175',
+    ACME: '101118387301286232222'
   }
 }
 
-const UserID = UserIDs.drive.Jeremy
+const UserID = UserIDs.drive.ACME
 var PageResults = {}
 var UserCards = []
 var LastRefresh = 0
@@ -35,7 +36,7 @@ var LastRefresh = 0
 const algoliaParams = { // Need to send these to app.vue to avoid duplication!
   appID: 'I2VKMNNAXI',
   apiKey: '2b8406f84cd4cc507da173032c46ee7b',
-  index: 'ForgetMeNot_Context'
+  index: 'ForgetMeNot_Context_Test'
 }
 Vue.use(ExplaainSearch, algoliaParams)
 

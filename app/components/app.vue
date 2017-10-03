@@ -36,7 +36,7 @@
         algoliaParams: { // Need to fetch these from app.vue to avoid duplication!
           appID: 'I2VKMNNAXI',
           apiKey: '2b8406f84cd4cc507da173032c46ee7b',
-          index: 'ForgetMeNot_Context'
+          index: 'ForgetMeNot_Context_Test'
         },
         authorParams: {
           // url: 'https://forget-me-not--app.herokuapp.com/api/memories',

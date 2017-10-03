@@ -12,8 +12,8 @@
         <ibutton icon="plus" text="Create" :click="beginCreate"></ibutton>
       </div>
 
-      <button id="authorize-button" style="display: none;">Authorize</button>
-      <button id="signout-button" style="display: none;">Sign Out</button>
+      <!-- <button id="authorize-button" style="display: none;">Authorize</button>
+      <button id="signout-button" style="display: none;">Sign Out</button> -->
 
       <ul class="cards">
         <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
@@ -201,7 +201,8 @@
          */
         function appendPre(message) {
           var pre = document.getElementById('main');
-          var textContent = document.createTextNode(message + '\n');
+          var textContent = document.createElement('p')
+          textContent.appendChild(document.createTextNode(message))
           pre.appendChild(textContent);
         }
 
@@ -219,14 +220,11 @@
             'fields': "nextPageToken, files(id, name, mimeType)"
           }).then(function(response) {
             console.log(response);
-            appendPre('Files:');
             var files = response.result.files;
             if (files && files.length > 0) {
-              for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                appendPre(file.name + ' (' + file.id + ')');
+              files.map(function(file) {
                 if (file.mimeType == 'application/vnd.google-apps.document') {
-                  gapi.client.drive.files.export({
+                  return gapi.client.drive.files.export({
                     'fileId': file.id,
                     'mimeType': 'text/plain'
                   }).then(function(response) {
@@ -234,24 +232,39 @@
                     console.log(response);
                     const cards = self.convertFileToCards(response.body)
                     cards.forEach(function(card) {
-                      appendPre('-------\n' + card.text + '\n-------\n\n')
+                      // appendPre(card.text)
                     })
-                    cards.splice(0,1).forEach(function(card) {
+                    const win = []
+                    const lose = []
+                    const savePromises = cards.map(function(card) {
                       card.sender = self.user.id
                       card.callback = self.modalCallback;
-                      ExplaainAuthor.createCard(card)
+                      return ExplaainAuthor.createCard(card)
                       .then(function(res) {
-                        console.log(res)
+                        console.log(card.text);
+                        console.log(res);
+                        win.push(card.text)
                       }).catch(function(e) {
+                        console.log(card.text);
                         console.log(e);
+                        lose.push(card.text)
                       })
                     })
-                    appendPre(response.body + '\n\n\n\n\n---------------------\n\n\n\n\n');
+                    savePromises.reduce(Q.when)
+                    .then(function(res) {
+                      console.log(res);
+                      console.log(win);
+                      console.log(lose);
+                      self.searchRecent()
+                    }).catch(function(e) {
+                      console.log(e);
+                      self.searchRecent()
+                    })
                   }).catch(function(e) {
                     console.log(e);
                   })
                 }
-              }
+              })
             } else {
               appendPre('No files found.');
             }
@@ -285,7 +298,7 @@
     methods: {
       convertFileToCards: function(body) {
         const cards = []
-        body.split(/(\r\n\r\n|\n\n|\r\r)/gm).forEach(function(chunk) {
+        body.split(/(\r\n\r\n\r\n|\n\n\n|\r\r\r)/gm).forEach(function(chunk) {
           chunk = chunk.trim()
           if (chunk.length)
             cards.push({text: chunk})
@@ -319,18 +332,15 @@
       },
       openPopup: function(card) {
         this.popupCards = [card]
-        console.log(this.popupTimeout);
         clearTimeout(this.popupTimeout)
       },
       closePopup: function() {
         const self = this
-        console.log(self.popupTimeout);
         clearTimeout(self.popupTimeout)
         if (this.sidebar) {
           self.popupTimeout = setTimeout(function() {
             self.popupCards = []
           }, 1000)
-          console.log(self.popupTimeout);
         } else {
           this.popupCards = []
         }
@@ -384,6 +394,7 @@
         this.modal.text = '';
       },
       beginEdit: function(objectID, text) {
+        this.closePopup()
         this.modal.sender = this.getUser().id;
         this.modal.show = true;
         this.modal.submit = ExplaainAuthor.editCard;
@@ -392,9 +403,11 @@
       },
       beginDelete: function(objectID) {
         const self = this
+        self.closePopup()
         const data = {
           sender: this.getUser().id,
           objectID: objectID,
+          callback: self.modalCallback
         }
         console.log(19191);
         ExplaainAuthor.deleteCard(data)
@@ -417,8 +430,8 @@
         //   objectID: objectID,
         // }
       },
-      modalCallback: function() {
-        this.showAlert('success', 2000, 'Success! Update made.')
+      modalCallback: function(message) {
+        this.showAlert('success', 2000, message || 'Success! Update made.')
       },
       copyAlert: function() {
         this.showAlert('success', 2000, 'Copied to clipboard!')
@@ -451,6 +464,13 @@
     font-family: "Lato", Arial, sans-serif;
     color: #555;
     pointer-events: none;
+  }
+  body div:not(.popup), body button {
+    pointer-events: all;
+  }
+
+  .main p {
+    margin: 50px 10px;
   }
 
   .fa-icon {
@@ -511,10 +531,10 @@
     left: 0;
     right: 0;
     padding-top: 200px;
+    pointer-events: none;
   }
   .explorer.sidebar .popup {
     right: 50%;
-    pointer-events: none;
   }
   .explorer .popup.active {
     pointer-events: all;

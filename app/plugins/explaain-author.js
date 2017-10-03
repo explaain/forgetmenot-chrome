@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Q from 'q';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
+// import Algolia from 'algoliasearch';
 
 Vue.use(VueAxios, axios)
 
@@ -18,6 +19,7 @@ const Author = {
         d.resolve(response)
       }).catch(function(e) {
         console.log(e);
+        d.reject(e)
       })
       return d.promise
     }
@@ -31,10 +33,11 @@ const Author = {
       .then((response) => {
         console.log('Card successfully created');
         console.log(response)
-        // self.showAlert('success', 2000, 'Card created!')
-        data.callback();
+        data.callback('Card created!');
+        self.showAlert('success', 2000, 'Card created!')
+        d.resolve(response)
       }).catch(function(e) {
-        console.log(e);
+        d.reject(e)
       });
       return d.promise
     }
@@ -47,12 +50,12 @@ const Author = {
       .then((response) => {
         console.log('Card successfully edited');
         console.log(response)
-        self.query = '';
-        // self.cards = [];
-        // self.showAlert('success', 2000, 'Card updated!')
-        data.callback();
+        data.callback('Card updated!');
+        self.showAlert('success', 2000, 'Card updated!')
+        d.resolve(response)
       }).catch(function (e) {
         console.log(e);
+        d.reject(e)
       });
       return d.promise
     }
@@ -65,17 +68,31 @@ const Author = {
       .then((response) => {
         console.log('Card successfully deleted');
         console.log(response)
-        self.query = '';
-        // self.cards = [];
-        // self.showAlert('success', 2000, 'Card deleted!')
+        data.callback('Card deleted!');
+        self.showAlert('success', 2000, 'Card deleted!')
         d.resolve()
-        // data.callback();
       }).catch(function (e) {
         console.log(e);
         d.reject()
       });
       return d.promise
     }
+
+    // const deleteByQuery = function(data) {
+    //   const d = Q.defer()
+    //   const self = this;
+    //   console.log('data: ', data);
+    //   Vue.axios.delete(url, {params: data})
+    //   .then((response) => {
+    //     console.log('All user cards successfully deleted');
+    //     console.log(response)
+    //     d.resolve()
+    //   }).catch(function (e) {
+    //     console.log(e);
+    //     d.reject()
+    //   });
+    //   return d.promise
+    // }
 
     this.importFromDrive = importFromDrive;
     this.createCard = createCard;

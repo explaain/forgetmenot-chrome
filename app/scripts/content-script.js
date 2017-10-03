@@ -153,6 +153,7 @@ const createDrawer = function() {
       + "padding: 0px 9px 2px;"
       + "cursor: pointer;"
       + "font-weight: bold;"
+      + "pointer-events: all;"
     close.appendChild(document.createTextNode('x'))
 
     // Click Events

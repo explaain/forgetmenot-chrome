@@ -1,10 +1,11 @@
 <template lang="html">
   <div class="card shadow" v-on:mouseover="cardMouseover" v-on:mouseout="cardMouseout" v-on:click="cardClick" :class="{ highlight: card.highlight }">
-    <button class="copy" type="button" @click="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
+    <button class="copy" type="button" @click.stop="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
     <div class="label highlight" v-if="card.highlight"><icon name="bolt"></icon> Top Hit</div>
     <div class="label"><icon name="clock-o"></icon> Memory</div>
-    <p>{{card.sentence}}</p>
-    <p>{{card.description}}</p>
+    <p v-if="!full">{{card.preview}}</p>
+    <p v-if="full">{{card.sentence}}</p>
+    <p v-if="full">{{card.description}}</p>
     <div class="list">
       <cardlet v-for="item in card.listCards" :card="item" :key="item.objectID"></cardlet>
     </div>
@@ -45,6 +46,9 @@ export default {
     ibutton: IconButton,
     cardlet: Cardlet,
   },
+  created: function() {
+    this.card.preview = this.card.sentence.trunc(140, true)
+  },
   methods: {
     cardMouseover: function() {
       const self = this
@@ -64,11 +68,19 @@ export default {
     deleteCard: function() {
       this.$emit('deleteCard', this.card.objectID)
     },
-    copy: function() {
+    copy: function(e) {
       // The v-clipboard directive has already copied the text from the card - this function just shows the alert
       this.$emit('copy')
     }
   }
+}
+
+String.prototype.trunc = function( n, useWordBoundary ) {
+  if (this.length <= n) { return this; }
+  var subString = this.substr(0, n-1);
+  return (useWordBoundary
+    ? subString.substr(0, subString.lastIndexOf(' '))
+    : subString) + "...";
 }
 </script>
 
@@ -95,18 +107,18 @@ export default {
     border: none;
   }
   @media (min-width: 600px) {
-    .explorer:not(.sidebar) .card {
+    .explorer:not(.sidebar) .main .card {
       width: calc(50% - 50px);
     }
-    .explorer:not(.sidebar) .card.shadow {
+    .explorer:not(.sidebar) .main .card.shadow {
       width: calc(50% - 70px);
     }
   }
   @media (min-width: 900px) {
-    .explorer:not(.sidebar) .card {
+    .explorer:not(.sidebar) .main .card {
       width: calc(33.3% - 50px);
     }
-    .explorer:not(.sidebar) .card.shadow {
+    .explorer:not(.sidebar) .main .card.shadow {
       width: calc(33.3% - 70px);
     }
   }
@@ -141,6 +153,9 @@ export default {
   }
   .card p, .card img {
     margin: 5px;
+  }
+  .card p {
+    white-space: pre-wrap;
   }
   .card img {
     max-width: calc(100% - 10px);

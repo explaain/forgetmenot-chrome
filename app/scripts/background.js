@@ -18,9 +18,9 @@
 //   render: h => h(Background),
 // })
 
-
-console.log(123456);
-
-import Search from '../mixins/search.js'
-
-Search.searchCards('', "", 24)
+//
+// console.log(123456);
+//
+// import Search from '../mixins/search.js'
+//
+// Search.searchCards('', "", 24)
