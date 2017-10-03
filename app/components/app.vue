@@ -1,6 +1,6 @@
 <template lang="html">
   <div class="app">
-    <explorer :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams">
+    <explorer :sidebar="sidebar" :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams">
       <ibutton slot="buttons" icon="search-plus" text="Page" :click="fromPage" v-if="plugin"></ibutton>
     </explorer>
   </div>
@@ -20,6 +20,9 @@
   log.setLevel('debug')
 
   export default {
+    props: [
+      'sidebar',
+    ],
     data(){
       return {
         firebaseConfig: {
@@ -45,9 +48,10 @@
         logo: "../images/logo.png",
         pageCards: [], //???
         cards: [], //???
+        // sidebar: true
       }
     },
-    created: function() {
+    created: function(a) {
       const self = this
       self.getUser();
       if (self.plugin) {

@@ -1,5 +1,5 @@
 <template lang="html">
-  <div class="card shadow" :class="{ highlight: card.highlight }">
+  <div class="card shadow" v-on:mouseover="cardMouseover" v-on:mouseout="cardMouseout" v-on:click="cardClick" :class="{ highlight: card.highlight }">
     <button class="copy" type="button" @click="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
     <div class="label highlight" v-if="card.highlight"><icon name="bolt"></icon> Top Hit</div>
     <div class="label"><icon name="clock-o"></icon> Memory</div>
@@ -9,7 +9,7 @@
       <cardlet v-for="item in card.listCards" :card="item" :key="item.objectID"></cardlet>
     </div>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
-    <footer>
+    <footer v-if="full">
       <div class="buttons">
         <ibutton class="delete" icon="trash" text="Delete" :click="deleteCard"></ibutton>
         <ibutton class="edit" icon="pencil" text="Edit" :click="editCard"></ibutton>
@@ -31,7 +31,10 @@ import Icon from 'vue-awesome/components/Icon.vue';
 Vue.use(Clipboards);
 
 export default {
-  props: ['card'],
+  props: [
+    'card',
+    'full'
+  ],
   data: function(){
     return {
       copyIcon: '../images/clipboard.svg',
@@ -43,6 +46,18 @@ export default {
     cardlet: Cardlet,
   },
   methods: {
+    cardMouseover: function() {
+      const self = this
+      this.$emit('cardMouseover', self.card)
+    },
+    cardMouseout: function() {
+      const self = this
+      this.$emit('cardMouseout', self.card)
+    },
+    cardClick: function(a) {
+      const self = this
+      this.$emit('cardClick', self.card)
+    },
     editCard: function() {
       this.$emit('editCard', this.card.objectID, this.card.sentence)
     },
@@ -71,11 +86,32 @@ export default {
     border-radius: 10px;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    background: white;
+    cursor: pointer;
   }
   .card.shadow {
     width: calc(100% - 70px);
     box-shadow: 0px 0px 30px rgba(150,150,150,0.5);
     border: none;
+  }
+  @media (min-width: 600px) {
+    .explorer:not(.sidebar) .card {
+      width: calc(50% - 50px);
+    }
+    .explorer:not(.sidebar) .card.shadow {
+      width: calc(50% - 70px);
+    }
+  }
+  @media (min-width: 900px) {
+    .explorer:not(.sidebar) .card {
+      width: calc(33.3% - 50px);
+    }
+    .explorer:not(.sidebar) .card.shadow {
+      width: calc(33.3% - 70px);
+    }
+  }
+  .card.shadow:hover {
+    box-shadow: 0px 0px 30px rgba(100,100,100,0.5);
   }
   .card.highlight {
     box-shadow: 0px 0px 30px rgba(18,114,219,0.5);

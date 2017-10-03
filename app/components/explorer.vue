@@ -1,42 +1,38 @@
 <template lang="html">
-  <div class="explorer">
-    <alert :show="alertData.show" :type="alertData.type" :title="alertData.title"></alert>
-    <modal v-if="modal.show" @close="modal.show = false" @submit="modal.submit" :data="modal"></modal>
-    <div class="header">
-      <img :src="logo">
-      <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search">
-      <br>
-      <slot name="buttons"></slot>
-      <ibutton icon="history" text="Recent" :click="searchRecent"></ibutton>
-      <ibutton icon="plus" text="Create" :click="beginCreate"></ibutton>
-    </div>
+  <div class="explorer" v-bind:class="{sidebar: sidebar}">
+    <div id="main" class="main">
+      <alert :show="alertData.show" :type="alertData.type" :title="alertData.title"></alert>
+      <modal v-if="modal.show" @close="modal.show = false" @submit="modal.submit" :data="modal"></modal>
+      <div class="header">
+        <img :src="logo">
+        <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search">
+        <br>
+        <slot name="buttons"></slot>
+        <ibutton icon="history" text="Recent" :click="searchRecent"></ibutton>
+        <ibutton icon="plus" text="Create" :click="beginCreate"></ibutton>
+      </div>
 
-    <!-- <div id="firebaseui-auth-container"></div>
-    <div id="sign-in-status"></div>
-    <button id="sign-in-out" @click="toggleSignIn"></button>
-    <div id="account-details"></div> -->
+      <button id="authorize-button" style="display: none;">Authorize</button>
+      <button id="signout-button" style="display: none;">Sign Out</button>
 
-    <!--Add buttons to initiate auth sequence and sign out-->
-    <button id="authorize-button" style="display: none;">Authorize</button>
-    <button id="signout-button" style="display: none;">Sign Out</button>
-
-    <ul id="cards">
-      <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
+      <ul class="cards">
+        <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
         <p class="spinner" v-if="loading"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
         <p class="cards-label" v-if="pingCards.length">Match to content on the page 🙌</p>
-        <card v-for="card in pingCards" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" @copy="copyAlert"></card>
+        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="cards-label" v-if="pingCards.length && cards.length">Other potentially relevant information:</p>
-        <card v-for="card in cards" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" @copy="copyAlert"></card>
+        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
-      <!-- </isotope> -->
-    </ul>
+        <!-- </isotope> -->
+      </ul>
+    </div>
+    <div class="popup" v-bind:class="{ active: popupCards.length }" v-on:click="popupClick">
+      <ul class="cards">
+        <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
+        <card v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
+      </ul>
+    </div>
   </div>
-  <!-- <div class="popup">
-    <ul id="cards">
-      <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
-      <card v-for="card in popupCards" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" @copy="copyAlert"></card>
-    </ul>
-  </div> -->
 </template>
 
 
@@ -59,6 +55,7 @@
   import firebaseui from 'firebaseui';
   import 'vue-awesome/icons';
   import Icon from 'vue-awesome/components/Icon.vue';
+  import { mixin as clickaway } from 'vue-clickaway';
 
 
 
@@ -69,6 +66,10 @@
       'firebaseConfig',
       'algoliaParams',
       'authorParams',
+      'sidebar'
+    ],
+    mixins: [
+      clickaway
     ],
     data(){
       return {
@@ -76,6 +77,8 @@
         pageCards: [],
         cards: [],
         pingCards: [],
+        popupCards: [],
+        popupTimeout: null,
         loading: false,
         popupLoading: false,
         query: '',
@@ -197,7 +200,7 @@
          * @param {string} message Text to be placed in pre element.
          */
         function appendPre(message) {
-          var pre = document.getElementById('content');
+          var pre = document.getElementById('main');
           var textContent = document.createTextNode(message + '\n');
           pre.appendChild(textContent);
         }
@@ -210,42 +213,6 @@
           console.log(gapi);
           console.log(gapi.client);
           console.log(gapi.client.drive);
-
-          try {
-            gapi.client.drive.about.get({
-              'resourceName': 'people/me',
-              'requestMask.includeField': 'person.names',
-              'fields': ['user']
-            }).then(function(res) {
-              console.log('res');
-              console.log(res);
-            })
-          } catch(e) {
-            console.log(e);
-          }
-
-          try {
-            gapi.client.drive.about.get({
-              'resourceName': 'people/me',
-              'fields': ['user']
-            }).then(function(res) {
-              console.log('res');
-              console.log(res);
-            })
-          } catch(e) {
-            console.log(e);
-          }
-
-          try {
-            gapi.client.drive.about.get({
-              'fields': ['user']
-            }).then(function(res) {
-              console.log('res');
-              console.log(res);
-            })
-          } catch(e) {
-            console.log(e);
-          }
 
           gapi.client.drive.files.list({
             'pageSize': 10,
@@ -279,7 +246,7 @@
                         console.log(e);
                       })
                     })
-                    // appendPre(response.body + '\n\n\n\n\n---------------------\n\n\n\n\n');
+                    appendPre(response.body + '\n\n\n\n\n---------------------\n\n\n\n\n');
                   }).catch(function(e) {
                     console.log(e);
                   })
@@ -300,82 +267,6 @@
 
 
 
-      // firebase.initializeApp(this.firebaseConfig)
-      //
-      // var uiConfig = {
-      //   signInOptions: [
-      //     // Leave the lines as is for the providers you want to offer your users.
-      //     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-      //     // firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-      //     // firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-      //     // firebase.auth.GithubAuthProvider.PROVIDER_ID,
-      //     // firebase.auth.EmailAuthProvider.PROVIDER_ID,
-      //     // firebase.auth.PhoneAuthProvider.PROVIDER_ID
-      //   ],
-      //   // Terms of service url.
-      //   tosUrl: 'http://forgetmenot.explaain.com/',
-      //   callbacks: {
-      //     signInSuccess: function(currentUser, credential, redirectUrl) {
-      //       return false;
-      //     }
-      //   }
-      // };
-      // // Initialize the FirebaseUI Widget using Firebase.
-      // var ui = new firebaseui.auth.AuthUI(firebase.auth());
-      // // The start method will wait until the DOM is loaded.
-      // ui.start('#firebaseui-auth-container', uiConfig);
-      //
-      //
-      // const initApp = function() {
-      //   firebase.auth().onAuthStateChanged(function(user) {
-      //     self.user = user
-      //     if (user) {
-      //       // User is signed in.
-      //       console.log('User is signed in');
-      //       var displayName = user.displayName;
-      //       var email = user.email;
-      //       var emailVerified = user.emailVerified;
-      //       var photoURL = user.photoURL;
-      //       var uid = user.uid;
-      //       var phoneNumber = user.phoneNumber;
-      //       var providerData = user.providerData;
-      //       user.getIdToken().then(function(accessToken) {
-      //         self.user.accessToken = accessToken
-      //
-      //         document.getElementById('sign-in-status').textContent = 'Signed in';
-      //         document.getElementById('sign-in-out').textContent = 'Sign out';
-      //         document.getElementById('account-details').textContent = JSON.stringify({
-      //           displayName: displayName,
-      //           email: email,
-      //           emailVerified: emailVerified,
-      //           phoneNumber: phoneNumber,
-      //           photoURL: photoURL,
-      //           uid: uid,
-      //           accessToken: accessToken,
-      //           providerData: providerData
-      //         }, null, '  ');
-      //       });
-      //     } else {
-      //       // User is signed out.
-      //       console.log('User is signed out');
-      //       document.getElementById('sign-in-status').textContent = 'Signed out';
-      //       document.getElementById('sign-in-out').textContent = 'Sign in';
-      //       document.getElementById('account-details').textContent = '';
-      //     }
-      //   }, function(error) {
-      //     console.log(error);
-      //   });
-      // };
-      //
-      // window.addEventListener('load', function() {
-      //   initApp()
-      // });
-
-
-
-
-
-
       Vue.use(ExplaainSearch, this.algoliaParams)
       Vue.use(ExplaainAuthor, this.authorParams)
       console.log(this.getUser().id);
@@ -392,19 +283,6 @@
       alert: Alert
     },
     methods: {
-      // toggleSignIn: function() {
-      //   console.log('Attempting to sign out');
-      //   firebase.auth().signOut().then(function() {
-      //     // Sign-out successful.
-      //     console.log('Sign-out successful')
-      //   }).catch(function(error) {
-      //     // An error happened.
-      //     console.log('An error happened:', error);
-      //   });
-      // },
-      // importFromDrive: function() {
-      //   ExplaainAuthor.importFromDrive(self.user)
-      // },
       convertFileToCards: function(body) {
         const cards = []
         body.split(/(\r\n\r\n|\n\n|\r\r)/gm).forEach(function(chunk) {
@@ -412,13 +290,50 @@
           if (chunk.length)
             cards.push({text: chunk})
         })
-        console.log(cards);
         return cards
       },
       getUser: function() {
-        console.log(this.user);
-        console.log((this.user && this.user.id) ? this.user : {id: this.userID});
         return (this.user && this.user.id) ? this.user : {id: this.userID}
+      },
+      cardMouseover: function(card) {
+        if (this.sidebar)
+          this.openPopup(card)
+      },
+      cardMouseout: function(card) {
+        if (this.sidebar)
+          this.closePopup()
+      },
+      cardClick: function(card) {
+        const self = this
+        if (!this.sidebar) {
+          setTimeout(function() {
+            self.openPopup(card)
+          },1)
+        }
+      },
+      popupClick: function() {
+        const self = this
+        if (!this.sidebar) {
+          self.closePopup()
+        }
+      },
+      openPopup: function(card) {
+        this.popupCards = [card]
+        console.log(this.popupTimeout);
+        clearTimeout(this.popupTimeout)
+      },
+      closePopup: function() {
+        const self = this
+        console.log(self.popupTimeout);
+        clearTimeout(self.popupTimeout)
+        if (this.sidebar) {
+          self.popupTimeout = setTimeout(function() {
+            self.popupCards = []
+          }, 1000)
+          console.log(self.popupTimeout);
+        } else {
+          this.popupCards = []
+        }
       },
       updateCards: function(data) {
         this.loading = false
@@ -535,6 +450,7 @@
     font-size: 16px;
     font-family: "Lato", Arial, sans-serif;
     color: #555;
+    pointer-events: none;
   }
 
   .fa-icon {
@@ -566,6 +482,45 @@
     max-width: 250px;
     display: block;
     margin: auto;
+  }
+  .explorer {
+    /*pointer-events: none;*/
+  }
+  .explorer .main {
+    position: absolute;
+    z-index: 1;
+    pointer-events: all;
+  }
+  .explorer:not(.sidebar) .main {
+    width: calc(100% - 20px);
+  }
+
+  .explorer.sidebar .main {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    right: 0;
+  }
+
+  .popup {
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-top: 200px;
+  }
+  .explorer.sidebar .popup {
+    right: 50%;
+    pointer-events: none;
+  }
+  .explorer:not(.sidebar) .popup.active {
+    background: rgba(0,0,0,0.2);
+  }
+  .popup .card {
+    pointer-events: all;
   }
 
   input, textarea, button {

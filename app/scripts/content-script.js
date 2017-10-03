@@ -20,6 +20,7 @@ const collectPageData = function() {
 
 var pingDiv;
 const drawer = document.createElement("div")
+const iframe = document.createElement('iframe')
 
 // document.addEventListener("DOMContentLoaded", function(){ sendPageText(); }, false);
 
@@ -125,16 +126,19 @@ const createDrawer = function() {
       + "z-index: 1000000000000000;"
       + "background: white;"
       + "box-shadow: rgba(0, 0, 0, 0.4) -1px 3px 50px 0px;"
-      + "transition: all 0.6s ease 0s;";
+      + "transition: all 0.6s ease 0s;"
     drawer.setAttribute('data-opened', 'false')
 
-    const iframe = document.createElement('iframe')
     iframe.src = chrome.runtime.getURL('../pages/popup.html')
     iframe.id = 'forgetmenot-frame'
     iframe.style.cssText = ""
-      + "width: 100%;"
+      + "position: absolute;"
+      + "top: 0;"
       + "height: 100%;"
+      + "left: -100%;"
+      + "width: 200%;"
       + "border: none;"
+      + "pointer-events: none;"
 
     const close = document.createElement('a')
     close.style.cssText = ""
@@ -186,6 +190,8 @@ const openDrawer = function(e) {
   if (drawer.getAttribute('data-opened') != 'true' && (!e || !e.dealtWith)) {
     displayPageResults()
     drawer.style.right = '0px'
+    drawer.style.boxShadow = "rgba(0, 0, 0, 0.4) -1px 3px 50px 0px;"
+    iframe.style.pointerEvents = 'all'
     drawer.setAttribute('data-opened', 'true')
     log.info(drawer.getAttribute('data-opened'))
   }
@@ -195,6 +201,8 @@ const closeDrawer = function(e) {
   // log.info(drawer.getAttribute('data-opened'))
   if (drawer.getAttribute('data-opened') == 'true' && (!e || !e.dealtWith)) {
     drawer.style.right = '-' + drawer.style.width
+    drawer.style.boxShadow = "none"
+    iframe.style.pointerEvents = 'none'
     drawer.setAttribute('data-opened', 'false')
   }
   // log.info(drawer.getAttribute('data-opened'))
