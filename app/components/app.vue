@@ -40,8 +40,8 @@
         },
         authorParams: {
           // url: 'https://forget-me-not--app.herokuapp.com/api/memories',
-          url: 'http://forget-me-not--staging.herokuapp.com/api/memories',
-          importUrl: 'http://forget-me-not--staging.herokuapp.com/api/import'
+          url: '//forget-me-not--staging.herokuapp.com/api/memories',
+          importUrl: '//forget-me-not--staging.herokuapp.com/api/import'
         },
         userID: '', // This will be replaced by user: {authProvider: '', id: ''}
         plugin: true,
