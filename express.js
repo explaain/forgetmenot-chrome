@@ -85,9 +85,13 @@ const express = require('express')
 const app = express()
 
 
-app.use(express.static('dist/chrome'))
+// app.use(express.static('dist/chrome'))
 
 app.set('port', 5000);
+
+app.get('/', function (req, res) {
+  res.send('Hello World!')
+})
 
 app.listen(5000, function () {
   console.log('App listening on port 5000!')
