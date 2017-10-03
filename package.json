@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "chrome extesion with vue",
   "scripts": {
-    "start": "npm run dev:chrome",
+    "start": "node ./express",
     "start1": "npm run build:chrome",
     "build": "npm run build:chrome",
     "build:chrome": "gulp --production --vendor=chrome && gulp pack --vendor=chrome",
@@ -35,6 +35,7 @@
     "del": "2.x.x",
     "eslint": "3.x.x",
     "eslint-loader": "1.x.x",
+    "express": "^4.16.1",
     "firebase": "^4.4.0",
     "firebaseui": "^2.3.0",
     "google-auth-library": "^0.11.0",

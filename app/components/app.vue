@@ -81,12 +81,13 @@
         const self = this;
         try {
           chrome.runtime.sendMessage({action: "getUser"}, function(userID) {
-            console.log('userID', userID);
             self.userID = userID;
+            console.log('userID', self.userID);
           });
         } catch(e) {
           this.plugin = false;
-          self.userID = '1528134990563202';
+          self.userID = '101118387301286232222';
+          console.log('userID', self.userID);
         }
       },
       fromPage: function() {
