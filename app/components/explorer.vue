@@ -26,10 +26,10 @@
         <!-- </isotope> -->
       </ul>
     </div>
-    <div class="popup" v-bind:class="{ active: popupCards.length }" v-on:click="popupClick">
+    <div class="popup" v-bind:class="{ active: popupCards.length }">
       <ul class="cards">
         <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
-        <card v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
+        <card v-on-clickaway="popupClick" v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
       </ul>
     </div>
   </div>
@@ -515,6 +515,9 @@
   .explorer.sidebar .popup {
     right: 50%;
     pointer-events: none;
+  }
+  .explorer .popup.active {
+    pointer-events: all;
   }
   .explorer:not(.sidebar) .popup.active {
     background: rgba(0,0,0,0.2);
