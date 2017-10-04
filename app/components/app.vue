@@ -1,6 +1,6 @@
 <template lang="html">
   <div class="app">
-    <explorer :sidebar="sidebar" :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams">
+    <explorer :sidebar="sidebar" :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams" v-on:closeDrawer="closeDrawer">
       <ibutton slot="buttons" icon="search-plus" text="Page" :click="fromPage" v-if="plugin"></ibutton>
     </explorer>
   </div>
@@ -104,8 +104,12 @@
           noCardMessage: noCardMessage
         }
         this.$emit('updateCards', data);
-
       },
+      closeDrawer: function() {
+        console.log('closeDrawer')
+        const message = {action: 'closeDrawer'}
+        window.parent.postMessage(message, "*");
+      }
     }
   }
 </script>

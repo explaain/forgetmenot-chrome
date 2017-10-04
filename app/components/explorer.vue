@@ -19,17 +19,17 @@
         <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
         <p class="spinner" v-if="loading"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
         <p class="cards-label" v-if="pingCards.length">Match to content on the page 🙌</p>
-        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick.stop="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="cards-label" v-if="pingCards.length && cards.length">Other potentially relevant information:</p>
-        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick.stop="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
         <!-- </isotope> -->
       </ul>
     </div>
-    <div class="popup" v-bind:class="{ active: popupCards.length }">
-      <ul class="cards">
+    <div class="popup" v-bind:class="{ active: popupCards.length }" @click.self="popupFrameClick">
+      <ul class="cards" @click.self="popupFrameClick">
         <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
-        <card v-on-clickaway="popupClick" v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
+        <card v-on-clickaway="popupClickaway" v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
       </ul>
     </div>
   </div>
@@ -326,20 +326,28 @@
           },1)
         }
       },
-      popupClick: function() {
+      popupClickaway: function() {
         const self = this
         if (!this.sidebar) {
           self.closePopup()
+        }
+      },
+      popupFrameClick: function() {
+        const self = this
+        if (this.sidebar) {
+          console.log('closeDrawer')
+          self.closePopup(true)
+          self.$emit('closeDrawer')
         }
       },
       openPopup: function(card) {
         this.popupCards = [card]
         clearTimeout(this.popupTimeout)
       },
-      closePopup: function() {
+      closePopup: function(instantly) {
         const self = this
         clearTimeout(self.popupTimeout)
-        if (this.sidebar) {
+        if (this.sidebar && !instantly) {
           self.popupTimeout = setTimeout(function() {
             self.popupCards = []
           }, 1000)

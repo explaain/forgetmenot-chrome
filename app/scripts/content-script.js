@@ -220,8 +220,12 @@ const toggleDrawer = function(e) {
 window.addEventListener('message', function(event) {
   switch (event.data.action) {
     case 'getPageResults':
-    log.info(5)
+      log.info(5)
       displayPageResults()
+      break;
+    case 'closeDrawer':
+      console.log('closeDrawer')
+      closeDrawer()
       break;
     default:
 
