@@ -82,6 +82,7 @@
         loading: false,
         popupLoading: false,
         query: '',
+        lastQuery: '',
         modal: {
           show: false,
           text: ''
@@ -176,6 +177,7 @@
          *  Sign in the user upon button click.
          */
         function handleAuthClick(event) {
+          self.loading = true
           gapi.auth2.getAuthInstance().signIn()
           .then(function(res) {
             self.user.authProvider = 'google'
@@ -359,6 +361,7 @@
       search: function() {
         const self = this;
         self.setLoading()
+        self.lastQuery = self.query
         ExplaainSearch.searchCards(self.getUser().id, self.query, 12)
         .then(function(hits) {
           self.loading = false
@@ -431,13 +434,18 @@
         // }
       },
       modalCallback: function(message) {
+        const self = this
         this.showAlert('success', 2000, message || 'Success! Update made.')
+        const query = this.lastQuery
+        setTimeout(function() {
+          self.query = query
+          self.search()
+        },1000)
       },
       copyAlert: function() {
         this.showAlert('success', 2000, 'Copied to clipboard!')
       },
       showAlert: function(type, duration, title) {
-        const self = this;
         self.alertData = {
           show: true,
           type: type,

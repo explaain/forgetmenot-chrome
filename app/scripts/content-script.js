@@ -191,7 +191,7 @@ const openDrawer = function(e) {
   if (drawer.getAttribute('data-opened') != 'true' && (!e || !e.dealtWith)) {
     displayPageResults()
     drawer.style.right = '0px'
-    drawer.style.boxShadow = "rgba(0, 0, 0, 0.4) -1px 3px 50px 0px;"
+    drawer.style.boxShadow = "rgba(0, 0, 0, 0.4) -1px 3px 50px 0px"
     iframe.style.pointerEvents = 'all'
     drawer.setAttribute('data-opened', 'true')
     log.info(drawer.getAttribute('data-opened'))
