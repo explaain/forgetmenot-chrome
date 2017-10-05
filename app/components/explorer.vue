@@ -577,7 +577,7 @@
   }
   input {
     margin: 20px;
-    width: calc(100% - 60px);
+    width: calc(100% - 82px);
     max-width: 500px;
   }
   input:focus {
