@@ -19,9 +19,9 @@
         <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
         <p class="spinner" v-if="loading"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
         <p class="cards-label" v-if="pingCards.length">Match to content on the page 🙌</p>
-        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick.stop="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="cards-label" v-if="pingCards.length && cards.length">Other potentially relevant information:</p>
-        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick.stop="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
         <!-- </isotope> -->
       </ul>
@@ -177,7 +177,6 @@
          *  Sign in the user upon button click.
          */
         function handleAuthClick(event) {
-          self.loading = true
           gapi.auth2.getAuthInstance().signIn()
           .then(function(res) {
             self.user.authProvider = 'google'
@@ -212,6 +211,8 @@
          * Print files.
          */
         function listFiles() {
+
+          self.setLoading()
 
           console.log(gapi);
           console.log(gapi.client);
@@ -551,6 +552,7 @@
   }
   .explorer.sidebar .popup {
     right: 50%;
+    pointer-events: all;
   }
   .explorer .popup.active {
     pointer-events: all;
