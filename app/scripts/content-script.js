@@ -118,6 +118,7 @@ sendPageText();
 const createDrawer = function() {
   try {
     drawer.style.cssText = ""
+      + "all: initial;"
       + "position: fixed;"
       + "top: 0;"
       + "right: -400px;"
@@ -132,6 +133,7 @@ const createDrawer = function() {
     iframe.src = chrome.runtime.getURL('../pages/popup.html')
     iframe.id = 'forgetmenot-frame'
     iframe.style.cssText = ""
+      + "all: initial;"
       + "position: absolute;"
       + "top: 0;"
       + "height: 100%;"
@@ -142,6 +144,7 @@ const createDrawer = function() {
 
     const close = document.createElement('a')
     close.style.cssText = ""
+      + "all: initial;"
       + "position: absolute;"
       + "top: 6px;"
       + "left: 4px;"

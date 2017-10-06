@@ -33,8 +33,8 @@ const Author = {
       .then((response) => {
         console.log('Card successfully created');
         console.log(response)
-        data.callback('Card created!');
-        self.showAlert('success', 2000, 'Card created!')
+        // data.callback('Card created!');
+        // self.showAlert('success', 2000, 'Card created!')
         d.resolve(response)
       }).catch(function(e) {
         d.reject(e)
@@ -50,8 +50,8 @@ const Author = {
       .then((response) => {
         console.log('Card successfully edited');
         console.log(response)
-        data.callback('Card updated!');
-        self.showAlert('success', 2000, 'Card updated!')
+        // data.callback('Card updated!');
+        // self.showAlert('success', 2000, 'Card updated!')
         d.resolve(response)
       }).catch(function (e) {
         console.log(e);
@@ -68,8 +68,8 @@ const Author = {
       .then((response) => {
         console.log('Card successfully deleted');
         console.log(response)
-        data.callback('Card deleted!');
-        self.showAlert('success', 2000, 'Card deleted!')
+        // data.callback('Card deleted!');
+        // self.showAlert('success', 2000, 'Card deleted!')
         d.resolve()
       }).catch(function (e) {
         console.log(e);

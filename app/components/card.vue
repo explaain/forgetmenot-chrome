@@ -1,5 +1,5 @@
 <template lang="html">
-  <div class="card shadow" v-on:mouseover="cardMouseover" v-on:mouseout="cardMouseout" v-on:click="cardClick" :class="{ highlight: card.highlight }">
+  <div class="card shadow" @mouseover="cardMouseover" @mouseout="cardMouseout" @click="cardClick" :class="{ highlight: card.highlight }">
     <button class="copy" type="button" @click.stop="copy" v-clipboard="card.sentence"><img class="icon" :src="copyIcon">Copy</button>
     <div class="label highlight" v-if="card.highlight"><icon name="bolt"></icon> Top Hit</div>
     <div class="label"><icon name="clock-o"></icon> Memory</div>

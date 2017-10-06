@@ -17,11 +17,14 @@
 
       <ul class="cards">
         <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
-        <p class="spinner" v-if="loading"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
+        <p class="spinner" v-if="loading && loader == -1"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
+        <p class="loader-text" v-if="loader != -1">Importing and processing content...</p>
+        <div class="loader" v-if="loader != -1"><div :style="{ width: loader + '%' }"></div></div>
+        <p class="loader-card-text" v-if="loader != -1">{{loaderCards}} cards generated</p>
         <p class="cards-label" v-if="pingCards.length">Match to content on the page 🙌</p>
-        <card v-for="card in pingCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in pingCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="cards-label" v-if="pingCards.length && cards.length">Other potentially relevant information:</p>
-        <card v-for="card in cards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" v-on:cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in cards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
         <!-- </isotope> -->
       </ul>
@@ -29,7 +32,7 @@
     <div class="popup" v-bind:class="{ active: popupCards.length }" @click.self="popupFrameClick">
       <ul class="cards" @click.self="popupFrameClick">
         <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
-        <card v-on-clickaway="popupClickaway" v-for="card in popupCards" v-on:cardMouseover="cardMouseover" v-on:cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
+        <card v-on-clickaway="popupClickaway" v-for="card in popupCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
       </ul>
     </div>
   </div>
@@ -80,6 +83,8 @@
         popupCards: [],
         popupTimeout: null,
         loading: false,
+        loader: -1,
+        loaderCards: 0,
         popupLoading: false,
         query: '',
         lastQuery: '',
@@ -166,7 +171,8 @@
             authorizeButton.style.display = 'none';
             signoutButton.style.display = 'block';
 
-            listFiles();
+            if (getParameterByName('import') == 'true')
+              importFromFiles()
           } else {
             authorizeButton.style.display = 'block';
             signoutButton.style.display = 'none';
@@ -209,8 +215,8 @@
 
         /**
          * Print files.
-         */
-        function listFiles() {
+        */
+        function importFromFiles() {
 
           self.setLoading()
 
@@ -225,54 +231,57 @@
             console.log(response);
             var files = response.result.files;
             if (files && files.length > 0) {
-              files.map(function(file) {
-                if (file.mimeType == 'application/vnd.google-apps.document') {
-                  return gapi.client.drive.files.export({
-                    'fileId': file.id,
-                    'mimeType': 'text/plain'
-                  }).then(function(response) {
-                    console.log('response');
-                    console.log(response);
-                    const cards = self.convertFileToCards(response.body)
-                    cards.forEach(function(card) {
-                      // appendPre(card.text)
-                    })
-                    const win = []
-                    const lose = []
-                    const savePromises = cards.map(function(card) {
-                      card.sender = self.user.id
-                      card.callback = self.modalCallback;
-                      return ExplaainAuthor.createCard(card)
-                      .then(function(res) {
-                        console.log(card.text);
-                        console.log(res);
-                        win.push(card.text)
-                      }).catch(function(e) {
-                        console.log(card.text);
-                        console.log(e);
-                        lose.push(card.text)
-                      })
-                    })
-                    savePromises.reduce(Q.when)
+              const win = []
+              const lose = []
+              var cardsCounted = 0
+              const filePromises = files.filter(function(file) {
+                return file.mimeType == 'application/vnd.google-apps.document'
+              }).map(function(file, i, filteredFiles) {
+                return gapi.client.drive.files.export({
+                  'fileId': file.id,
+                  'mimeType': 'text/plain'
+                }).then(function(response) {
+                  const cards = self.convertFileToCards(response.body)
+                  cardsCounted += cards.length
+                  cards.forEach(function(card) {
+                    // appendPre(card.text)
+                  })
+                  const savePromises = cards.map(function(card) {
+                    card.sender = self.user.id
+                    card.callback = self.modalCallback;
+                    return ExplaainAuthor.createCard(card)
                     .then(function(res) {
-                      console.log(res);
-                      console.log(win);
-                      console.log(lose);
-                      self.searchRecent()
+                      self.loaderCards++
+                      self.loader = 100*(self.loaderCards/cardsCounted)
+                      win.push(card.text)
                     }).catch(function(e) {
                       console.log(e);
-                      self.searchRecent()
+                      lose.push(card.text)
                     })
-                  }).catch(function(e) {
-                    console.log(e);
                   })
-                }
+                  return Q.allSettled(savePromises)
+                }).then(function(res) {
+                }).catch(function(e) {
+                  console.log(e);
+                })
+              })
+              Q.allSettled(filePromises)
+              .then(function(res) {
+                self.loader = -1
+                console.log(res);
+                console.log(win);
+                console.log(lose);
+                self.searchRecent()
+              }).catch(function(e) {
+                console.log(e);
+                self.searchRecent()
               })
             } else {
               appendPre('No files found.');
             }
           });
         }
+
 
         console.log('handleClientLoad');
         handleClientLoad()
@@ -466,6 +475,16 @@
       }
     }
   }
+
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
 </script>
 
 <!-- // <script async defer src="https://apis.google.com/js/api.js"
@@ -494,6 +513,30 @@
     margin-bottom: -0.2em;
     color: #777;
     height: 1.2em;
+  }
+
+  .loader-text {
+    font-size: 30px;
+    font-weight: bold;
+    color: #999;
+    margin-bottom: 20px;
+  }
+  .loader-card-text {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+
+  .loader {
+    position: relative;
+    margin: 60px auto;
+    height: 60px;
+    max-width: 500px;
+    width: calc(100% - 100px);
+    background: #ddd;
+  }
+  .loader > div {
+    height: 100%;
+    background: #ffd51c;
   }
 
   .spinner {
