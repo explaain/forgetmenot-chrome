@@ -10,6 +10,11 @@
       <cardlet v-for="item in card.listCards" :card="item" :key="item.objectID"></cardlet>
     </div>
     <img v-if="card.attachments && card.attachments[0]" v-bind:src="card.attachments[0].url">
+    <!-- <div class="buttons">
+      <button></button>
+      <button></button>
+      <button></button>
+    </div> -->
     <footer v-if="full">
       <div class="buttons">
         <ibutton class="delete" icon="trash" text="Delete" :click="deleteCard"></ibutton>

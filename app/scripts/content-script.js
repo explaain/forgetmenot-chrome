@@ -172,8 +172,25 @@ const createDrawer = function() {
       }
     });
 
+    const timeSaved = document.createElement('div')
+    timeSaved.style.cssText = ""
+      + "all: initial;"
+      + "font-family: Lato, Arial, sans-serif;"
+      + "position: absolute;"
+      + "bottom: 0;"
+      + "left: 0;"
+      + "right: 0;"
+      + "padding: 20px;"
+      + "background: white;"
+      + "box-shadow: 0px 0px 30px rgba(150,150,150,0.5);"
+      + "color: #999;"
+      + "text-align: center;"
+      + "font-weight: bold;"
+    timeSaved.appendChild(document.createTextNode('You\'ve saved 4.5 hours so far this month! 💪'))
+
     drawer.appendChild(close);
     drawer.appendChild(iframe);
+    drawer.appendChild(timeSaved);
     document.body.appendChild(drawer);
     log.info(drawer)
   } catch(e) {
