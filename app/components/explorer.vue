@@ -528,7 +528,7 @@
 
   .loader {
     position: relative;
-    margin: 60px auto;
+    margin: 30px auto;
     height: 60px;
     max-width: 500px;
     width: calc(100% - 100px);
@@ -561,7 +561,7 @@
     width: 80%;
     max-width: 250px;
     display: block;
-    margin: auto;
+    margin: 30px auto 10px;
   }
   .explorer {
     /*pointer-events: none;*/
@@ -590,7 +590,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding-top: 200px;
+    padding-top: 180px;
     pointer-events: none;
   }
   .explorer.sidebar .popup {

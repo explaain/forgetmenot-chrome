@@ -126,7 +126,10 @@ String.prototype.trunc = function( n, useWordBoundary ) {
     box-shadow: 0px 0px 30px rgba(100,100,100,0.5);
   }
   .card.highlight {
-    box-shadow: 0px 0px 30px rgba(18,114,219,0.5);
+    box-shadow: 0px 0px 30px rgba(255,211,35,0.7);
+  }
+  .card.highlight:hover {
+    box-shadow: 0px 0px 30px rgba(255,211,35,1);
   }
   .card button.copy {
     float: right;
@@ -142,7 +145,7 @@ String.prototype.trunc = function( n, useWordBoundary ) {
     display: inline-block;
   }
   .card .label.highlight, .card .label.highlight svg {
-    color: rgb(18,114,219)
+    color: rgb(255,211,35)
   }
   .card .label, .card .label .fa-icon {
     color: #aaa;
