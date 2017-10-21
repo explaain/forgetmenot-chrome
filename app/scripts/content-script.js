@@ -192,7 +192,6 @@ const createDrawer = function() {
     drawer.appendChild(iframe);
     drawer.appendChild(timeSaved);
     document.body.appendChild(drawer);
-    log.info(drawer)
   } catch(e) {
     log.error(e)
   }

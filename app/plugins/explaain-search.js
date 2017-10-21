@@ -26,6 +26,11 @@ const Search = {
         } else {
           fetchListItemCards(content.hits)
           .then(function() {
+            content.hits.forEach(function(hit) {
+              if (!hit.description) hit.description = hit.sentence || hit.text
+              delete hit.sentence
+              delete hit.text
+            })
             d.resolve(content.hits)
           })
         }
@@ -56,22 +61,21 @@ const Search = {
       const self = this
       const promises = []
       cards.forEach(function(card) {
-        card.listCards = {}
+        card.listCards = []
         if (card.listItems) {
           card.listItems.forEach(function(key) {
+            console.log(key);
             const p = Q.defer()
-            getCard(key)
-            .then(function(content) {
-              card.listCards[key] = content;
-              p.resolve(content);
-            })
-            promises.push(p.promise)
+            getCard(key) // Do we need to notify the card or provide callbacks etc here?
+            // promises.push(p.promise)
           })
         }
       })
       log.trace(promises);
       Q.allSettled(promises)
       .then(function(results) {
+        console.log(results);
+        console.log(cards);
         d.resolve(results);
       }).catch(function(e) {
         log.trace(e);

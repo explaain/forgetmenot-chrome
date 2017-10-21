@@ -5,34 +5,29 @@
       <modal v-if="modal.show" @close="modal.show = false" @submit="modal.submit" :data="modal"></modal>
       <div class="header">
         <img :src="logo">
-        <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search">
-        <br>
+        <input autofocus type="text" placeholder="Search for cards..." v-model="query" @keyup.enter="search"><br>
         <slot name="buttons"></slot>
+        <ibutton v-if="local" icon="code" text="Local" :click="searchTempLocal"></ibutton>
         <ibutton icon="history" text="Recent" :click="searchRecent"></ibutton>
         <ibutton icon="plus" text="Create" :click="beginCreate"></ibutton>
       </div>
 
-      <!-- <button id="authorize-button" style="display: none;">Authorize</button>
-      <button id="signout-button" style="display: none;">Sign Out</button> -->
-
       <ul class="cards">
-        <!-- <isotope :options='{}' :list="cards" @filter="filterOption=arguments[0]" @sort="sortOption=arguments[0]"> -->
         <p class="spinner" v-if="loading && loader == -1"><icon name="refresh" class="fa-spin fa-3x"></icon></p>
         <p class="loader-text" v-if="loader != -1">Importing and processing content...</p>
         <div class="loader" v-if="loader != -1"><div :style="{ width: loader + '%' }"></div></div>
         <p class="loader-card-text" v-if="loader != -1">{{loaderCards}} cards generated</p>
         <p class="cards-label" v-if="pingCards.length">Match to content on the page 🙌</p>
-        <card v-for="card in pingCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in pingCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @updateCard="updateCard" @deleteCard="beginDelete" :data="card" :key="card.objectID" :full="false" :allCards="allCards" :setCard="setCard" :getUser="getUser" @copy="copyAlert"></card>
         <p class="cards-label" v-if="pingCards.length && cards.length">Other potentially relevant information:</p>
-        <card v-for="card in cards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" :full="false" @copy="copyAlert"></card>
+        <card v-for="card in cards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @updateCard="updateCard" @deleteCard="beginDelete" :data="card" :key="card.objectID" :full="false" :allCards="allCards" :setCard="setCard" :getUser="getUser" @copy="copyAlert"></card>
         <p class="no-cards" v-if="!cards.length">{{noCardMessage}}</p>
-        <!-- </isotope> -->
       </ul>
     </div>
     <div class="popup" v-bind:class="{ active: popupCards.length }" @click.self="popupFrameClick">
-      <ul class="cards" @click.self="popupFrameClick">
+      <ul @click.self="popupFrameClick" class="cards">
         <p class="spinner" v-if="popupLoading"><icon name="spinner" class="fa-spin fa-3x"></icon></p>
-        <card v-on-clickaway="popupClickaway" v-for="card in popupCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @editCard="beginEdit" @deleteCard="beginDelete" :card="card" :key="card.objectID" full="true" @copy="copyAlert"></card>
+        <card v-for="card in popupCards" @cardMouseover="cardMouseover" @cardMouseout="cardMouseout" @cardClick="cardClick" @updateCard="updateCard" @deleteCard="beginDelete" :data="card" :key="card.objectID" :full="true" :allCards="allCards" :setCard="setCard" :getUser="getUser" @copy="copyAlert"></card>
       </ul>
     </div>
   </div>
@@ -43,22 +38,20 @@
 <script>
 
   import Vue from 'vue';
-  import Card from './card.vue';
-  import IconButton from './ibutton.vue';
-  import Modal from './modal.vue';
-  import Alert from './alert.vue';
-
-  import ExplaainSearch from '../plugins/explaain-search.js';
-  import ExplaainAuthor from '../plugins/explaain-author.js';
-
   import Q from 'q';
   import axios from 'axios';
   import VueAxios from 'vue-axios';
   import firebase from 'firebase';
   import firebaseui from 'firebaseui';
+  import Draggable from 'vuedraggable';
   import 'vue-awesome/icons';
   import Icon from 'vue-awesome/components/Icon.vue';
-  import { mixin as clickaway } from 'vue-clickaway';
+  import Card from './card.vue';
+  import IconButton from './ibutton.vue';
+  import Modal from './modal.vue';
+  import Alert from './alert.vue';
+  import ExplaainSearch from '../plugins/explaain-search.js';
+  import ExplaainAuthor from '../plugins/explaain-author.js';
 
 
 
@@ -69,16 +62,15 @@
       'firebaseConfig',
       'algoliaParams',
       'authorParams',
-      'sidebar'
-    ],
-    mixins: [
-      clickaway
+      'sidebar',
+      'local'
     ],
     data(){
       return {
         user: {},
         pageCards: [],
-        cards: [],
+        allCards: {},
+        mainCardList: [],
         pingCards: [],
         popupCards: [],
         popupTimeout: null,
@@ -98,6 +90,15 @@
           title: ''
         },
         noCardMessage: "Type above to search for cards",
+      }
+    },
+    computed: {
+      cards: function() {
+        const self = this
+        const watchThis = self.allCards // This does nothing other than force this function to watch for changes in self.allCards
+        return self.mainCardList ? self.mainCardList.map(function(objectID) {
+          return self.allCards[objectID] || { description: 'Card Not Found' }
+        }) : []
       }
     },
     created: function() {
@@ -122,9 +123,7 @@
          *  On load, called to load the auth2 library and API client library.
          */
         function handleClientLoad() {
-          console.log(1);
           gapi.load('client:auth2', initClient);
-          console.log(2);
         }
 
 
@@ -148,9 +147,6 @@
             self.user.id = gapi.auth2.getAuthInstance().currentUser.Ab.El // "104380110279658920175"
             console.log('self.getUser().id');
             console.log(self.getUser().id);
-            setTimeout(function() {
-              console.log(self.getUser().id);
-            },4000)
 
             // Handle the initial sign-in state.
             updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
@@ -176,6 +172,7 @@
           } else {
             authorizeButton.style.display = 'block';
             signoutButton.style.display = 'none';
+            handleAuthClick()
           }
         }
 
@@ -241,7 +238,7 @@
                   'fileId': file.id,
                   'mimeType': 'text/plain'
                 }).then(function(response) {
-                  const cards = self.convertFileToCards(response.body)
+                  const cards = self.convertFileToCards(response.body, file)
                   cardsCounted += cards.length
                   cards.forEach(function(card) {
                     // appendPre(card.text)
@@ -249,14 +246,13 @@
                   const savePromises = cards.map(function(card) {
                     card.sender = self.user.id
                     card.callback = self.modalCallback;
-                    return ExplaainAuthor.createCard(card)
+                    console.log(card);
+                    return ExplaainAuthor.saveCard(card)
                     .then(function(res) {
                       self.loaderCards++
                       self.loader = 100*(self.loaderCards/cardsCounted)
-                      win.push(card.text)
                     }).catch(function(e) {
                       console.log(e);
-                      lose.push(card.text)
                     })
                   })
                   return Q.allSettled(savePromises)
@@ -284,7 +280,9 @@
 
 
         console.log('handleClientLoad');
-        handleClientLoad()
+        if (!this.local) {
+          handleClientLoad()
+        }
       } catch(e) {
         console.log(e);
       }
@@ -305,38 +303,58 @@
       icon: Icon,
       ibutton: IconButton,
       modal: Modal,
-      alert: Alert
+      alert: Alert,
+      draggable: Draggable,
     },
     methods: {
-      convertFileToCards: function(body) {
+      convertFileToCards: function(body, file) {
         const cards = []
         body.split(/(\r\n\r\n\r\n|\n\n\n|\r\r\r)/gm).forEach(function(chunk) {
           chunk = chunk.trim()
           if (chunk.length)
-            cards.push({text: chunk})
+            cards.push({
+              text: chunk,
+              extractedFrom: {
+                title: file.name,
+                url: file.webContentLink // Could be webViewLink?
+              }
+            })
         })
         return cards
       },
       getUser: function() {
         return (this.user && this.user.id) ? this.user : {id: this.userID}
       },
+      getCard: function(objectID) {
+        return this.allCards[objectID]
+      },
+      setCard: function(objectID, card) {
+        const self = this
+        Vue.set(self.allCards, objectID, card) // Forces this to be watched
+      },
+      setCardProperty: function(objectID, property, value) {
+        const self = this
+        const card = self.allCards[objectID]
+        card[property] = value
+        Vue.set(self.allCards, objectID, card) // Forces this to be watched - not yet working, at least with 'updating'
+      },
       cardMouseover: function(card) {
         if (this.sidebar)
           this.openPopup(card)
       },
-      cardMouseout: function(card) {
+      cardMouseout: function() {
         if (this.sidebar)
           this.closePopup()
       },
       cardClick: function(card) {
         const self = this
         if (!this.sidebar) {
-          setTimeout(function() {
+          setTimeout(function() { // Is this timeout stil necessary?
             self.openPopup(card)
           },1)
         }
       },
-      popupClickaway: function() {
+      popupClickaway: function(event) {
         const self = this
         if (!this.sidebar) {
           self.closePopup()
@@ -344,10 +362,12 @@
       },
       popupFrameClick: function() {
         const self = this
+        console.log('popupFrameClick');
         if (this.sidebar) {
-          console.log('closeDrawer')
           self.closePopup(true)
           self.$emit('closeDrawer')
+        } else {
+          self.closePopup()
         }
       },
       openPopup: function(card) {
@@ -356,6 +376,7 @@
       },
       closePopup: function(instantly) {
         const self = this
+        self.editing = false // This should be for every card so currently does nothing
         clearTimeout(self.popupTimeout)
         if (this.sidebar && !instantly) {
           self.popupTimeout = setTimeout(function() {
@@ -368,13 +389,14 @@
       updateCards: function(data) {
         this.loading = false
         this.pingCards = data.cards.pings;
-        this.cards = data.cards.memories;
+        // this.cards = data.cards.memories;
+        this.mainCardList = data.cards.memories.map(function(card) { return card.objectID })
         this.noCardMessage = data.noCardMessage;
       },
       setLoading: function() {
         this.loading = true
         this.pingCards = []
-        this.cards = []
+        this.mainCardList = []
       },
       search: function() {
         const self = this;
@@ -383,11 +405,13 @@
         ExplaainSearch.searchCards(self.getUser().id, self.query, 12)
         .then(function(hits) {
           self.loading = false
-          console.log('hits')
-          console.log(hits)
           self.pingCards = []
-          self.cards = hits
+          // self.cards = hits
+          self.mainCardList = hits.map(function(card) { return card.objectID })
           self.noCardMessage = "No cards found"
+          hits.forEach(function(hit) {
+            self.setCard(hit.objectID, hit)
+          })
         }).catch(function(err) {
           console.log(err);
         })
@@ -401,26 +425,36 @@
           console.log('hits')
           console.log(hits)
           self.pingCards = []
-          self.cards = hits
+          // self.cards = hits
+          self.mainCardList = hits.map(function(card) { return card.objectID })
           self.noCardMessage = "No recent cards found"
+          hits.forEach(function(hit) {
+            self.setCard(hit.objectID, hit)
+          })
         }).catch(function(err) {
           console.log(err);
+        })
+      },
+      searchTempLocal: function() {
+        const self = this;
+        const hits = [{"intent":"storeMemory","sender":"1627888800569309","listItems":["620064670","620064680","620064690","620064700"],"hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508426117869,"objectID":"619948630","description":"Inject Meeting Notes"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508426117257,"objectID":"620064700","description":"Keep all signed timesheets and receipts"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508426117225,"objectID":"620064690","description":"Business model => pro version only"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508426117152,"objectID":"620064680","description":"Languages"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508426116967,"objectID":"620064670","description":"Finish card creation & editing"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateCreated":1508425700874,"dateUpdated":1508425700874,"objectID":"651610261","description":"Asdf"},{"intent":"storeMemory","sender":"1627888800569309","listItems":["645331361","610938240","610473050"],"hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508421510702,"objectID":"639442471","description":"Here is a list"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508421509549,"objectID":"610938240","description":"This is a brand new list"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508421508835,"objectID":"645331361","description":"A serious item"},{"intent":"storeMemory","sender":"1627888800569309","hasAttachments":false,"userID":"1627888800569309","dateUpdated":1508421508588,"objectID":"610473050","description":"Another list item"}]
+        // self.cards = hits
+        self.mainCardList = hits.map(function(card) { return card.objectID })
+        self.noCardMessage = "No recent cards found"
+        hits.forEach(function(hit) {
+          self.setCard(hit.objectID, hit)
         })
       },
       beginCreate: function() {
         this.modal.sender = this.getUser().id;
         this.modal.show = true;
-        this.modal.submit = ExplaainAuthor.createCard;
+        console.log(222)
+        this.modal.submit = ExplaainAuthor.saveCard
+        // .then(function() {
+        //   console.log(333)
+        // })
         delete this.modal.objectID;
         this.modal.text = '';
-      },
-      beginEdit: function(objectID, text) {
-        this.closePopup()
-        this.modal.sender = this.getUser().id;
-        this.modal.show = true;
-        this.modal.submit = ExplaainAuthor.editCard;
-        this.modal.objectID = objectID;
-        this.modal.text = text;
       },
       beginDelete: function(objectID) {
         const self = this
@@ -434,8 +468,8 @@
         ExplaainAuthor.deleteCard(data)
         .then(function() {
           console.log('Deletion complete')
-          self.cards.forEach(function(card, i) { //temporary - doesn't check to see whether it's actually been deleted!
-            if (card.objectID == objectID) {
+          self.mainCardList.forEach(function(cardID, i) { //temporary - doesn't check to see whether it's actually been deleted!
+            if (cardID == objectID) {
               self.cards.splice(i,1)
             }
           })
@@ -445,11 +479,58 @@
             }
           })
         })
-        // this.modal = {
-        //   show: true,
-        //   submit: ExplaainAuthor.deleteCard,
-        //   objectID: objectID,
-        // }
+      },
+      updateCard: function(data, callback, errorCallback) {
+        const self = this
+        const promises = []
+        if (data.listCards && data.listCards.length) {
+          data.listCards.forEach(function(listCard, index) {
+            const p = Q.defer()
+            if (!listCard.objectID || listCard.objectID.indexOf('TEMP') == 0) {
+              if (listCard.objectID) delete listCard.objectID
+              listCard.intent = 'storeMemory'
+              listCard.sender = self.getUser().id
+            }
+            console.log('hi');
+            self.saveCard(listCard)
+            .then(function(savedListCard) {
+              data.listItems[index] = savedListCard.objectID // In case it was a new listCard. This also relies on the index still being correct after the asynchronous delay
+              p.resolve()
+            }).catch(function(e) {
+              p.reject(e)
+            })
+            promises.push(p.promise)
+          })
+        }
+        console.log('hello');
+        Q.allSettled(promises)
+        .then(function() {
+          self.saveCard(data)
+          callback()
+        }).catch(function(e) {
+          console.log(e);
+          errorCallback(e)
+        })
+      },
+      saveCard: function(card) {
+        const d = Q.defer()
+        const self = this
+        if (self.getCard(card.objectID)) self.setCardProperty(card.objectID, 'updating', true)
+        console.log('yo');
+        ExplaainAuthor.saveCard(card)
+        .then(function(res) {
+          // card.objectID = res.data.memories[0].objectID // In case it was a new card
+          const returnedCard = res.data.memories[0]
+          self.setCard(returnedCard.objectID, card)
+          self.setCardProperty(returnedCard.objectID, 'objectID', returnedCard.objectID) // In case it was a new card
+          self.setCardProperty(returnedCard.objectID, 'updating', false)
+          d.resolve(card)
+        }).catch(function(e) {
+          console.error(e);
+          d.reject(e)
+        })
+        console.log('yo1');
+        return d.promise
       },
       modalCallback: function(message) {
         const self = this
@@ -555,13 +636,14 @@
 
   .header {
     text-align: center;
+    padding: 20px;
   }
 
   .header img {
     width: 80%;
     max-width: 250px;
     display: block;
-    margin: 30px auto 10px;
+    margin: 10px auto;
   }
   .explorer {
     /*pointer-events: none;*/
@@ -590,7 +672,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding-top: 180px;
+    padding: 180px 10px 60px;
+    text-align: center;
     pointer-events: none;
   }
   .explorer.sidebar .popup {
@@ -599,6 +682,7 @@
   }
   .explorer .popup.active {
     pointer-events: all;
+    overflow: scroll;
   }
   .explorer:not(.sidebar) .popup.active {
     background: rgba(0,0,0,0.2);
@@ -642,13 +726,13 @@
   }
 
 
-  ul {
+  .cards {
     margin: 0;
     padding: 0;
     text-align: center;
   }
 
-  li {
+  li { /* Is this even being used anymore? */
     list-style: none;
     display: inline-block;
     vertical-align: top;

@@ -24,17 +24,13 @@ const Author = {
       return d.promise
     }
 
-    const createCard = function(data) {
+    const saveCard = function(data) {
       const d = Q.defer()
       const self = this;
-      console.log('url: ', url);
-      console.log('data: ', data);
+      console.log(data);
       Vue.axios.post(url, data)
       .then((response) => {
-        console.log('Card successfully created');
-        console.log(response)
-        // data.callback('Card created!');
-        // self.showAlert('success', 2000, 'Card created!')
+        console.log(response);
         d.resolve(response)
       }).catch(function(e) {
         d.reject(e)
@@ -42,7 +38,23 @@ const Author = {
       return d.promise
     }
 
-    const editCard = function(data) {
+    /* To Remove -- START */
+    const createCard = function(data) {
+      const d = Q.defer()
+      const self = this;
+      console.log('data: ', data);
+      Vue.axios.post(url, data)
+      .then((response) => {
+        console.log('Card successfully created');
+        console.log(response)
+        d.resolve(response)
+      }).catch(function(e) {
+        d.reject(e)
+      });
+      return d.promise
+    }
+
+    const updateCard = function(data) {
       const d = Q.defer()
       const self = this;
       console.log('data: ', data);
@@ -50,8 +62,6 @@ const Author = {
       .then((response) => {
         console.log('Card successfully edited');
         console.log(response)
-        // data.callback('Card updated!');
-        // self.showAlert('success', 2000, 'Card updated!')
         d.resolve(response)
       }).catch(function (e) {
         console.log(e);
@@ -59,6 +69,7 @@ const Author = {
       });
       return d.promise
     }
+    /* To Remove -- END */
 
     const deleteCard = function(data) {
       const d = Q.defer()
@@ -95,8 +106,9 @@ const Author = {
     // }
 
     this.importFromDrive = importFromDrive;
+    this.saveCard = saveCard;
     this.createCard = createCard;
-    this.editCard = editCard;
+    this.updateCard = updateCard;
     this.deleteCard = deleteCard;
   },
 

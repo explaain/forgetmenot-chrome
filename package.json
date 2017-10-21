@@ -82,6 +82,7 @@
     "vue-js-modal": "^1.2.9",
     "vue-loader": "^11.1.4",
     "vue-template-compiler": "^2.2.1",
+    "vuedraggable": "^2.14.1",
     "vueify-insert-css": "^1.0.0",
     "webpack": "^2.2.1",
     "webpack-stream": "3.x.x",

@@ -1,6 +1,6 @@
 <template lang="html">
   <div class="app">
-    <explorer :sidebar="sidebar" :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams" @closeDrawer="closeDrawer">
+    <explorer :sidebar="sidebar" :userID="userID" :logo="logo" :firebaseConfig="firebaseConfig" :algoliaParams="algoliaParams" :authorParams="authorParams" @closeDrawer="closeDrawer" :local="local">
       <ibutton slot="buttons" icon="search-plus" text="Page" :click="fromPage" v-if="plugin"></ibutton>
     </explorer>
   </div>
@@ -22,6 +22,7 @@
   export default {
     props: [
       'sidebar',
+      'local'
     ],
     data(){
       return {
@@ -41,6 +42,7 @@
         authorParams: {
           // url: 'https://forget-me-not--app.herokuapp.com/api/memories',
           url: '//forget-me-not--staging.herokuapp.com/api/memories',
+          // url: '//localhost:5000/api/memories',
           importUrl: '//forget-me-not--staging.herokuapp.com/api/import'
         },
         userID: '', // This will be replaced by user: {authProvider: '', id: ''}
@@ -86,7 +88,7 @@
           });
         } catch(e) {
           this.plugin = false;
-          self.userID = '101118387301286232222';
+          self.userID = '1627888800569309';
           console.log('userID', self.userID);
         }
       },
