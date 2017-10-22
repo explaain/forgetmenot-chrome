@@ -210,6 +210,61 @@
           pre.appendChild(textContent);
         }
 
+        function resetDb() {
+          const d = Q.defer()
+          if (self.getUser().id == '101118387301286232222') {
+            self.deleteAllCards()
+            .then(function() {
+              const initialCards = [
+                {
+                  "context": [],
+                  "entities": {},
+                  "intent": "setTask.URL",
+                  "sender": "101118387301286232222",
+                  "sentence": "TechCrunch News:\r\n\r\nMACE has raised £500k from Angel List to help its efforts expanding the company's business SaaS model. Customers include Disney, Adobe and YouTube.",
+                  "hasAttachments": true,
+                  "userID": "101118387301286232222",
+                  "dateCreated": 1507109266738,
+                  "triggerURL": "mail.google.com",
+                  "actionSentence": "Breaking news",
+                  "attachments": [
+                    {
+                      "type": "image",
+                      "url": "https://s0.wp.com/wp-content/themes/vip/techcrunch-2013/assets/images/techcrunch.opengraph.default.png"
+                    }
+                  ],
+                  "objectID": "6376003513244535"
+                },
+                {
+                  "context": [],
+                  "entities": {},
+                  "intent": "setTask.URL",
+                  "sender": "101118387301286232222",
+                  "sentence": "MACE vs ACME Competitor Analysis:\r\n\r\n- They don't integrate with AWS\r\n- They don't offer a free trial\r\n- Customer satisfaction in 3* on Trustpilot vs us at 4.5*\r\n- They don't have case studies",
+                  "hasAttachments": false,
+                  "userID": "101118387301286232222",
+                  "dateCreated": 1507109266738,
+                  "triggerURL": "mail.google.com",
+                  "actionSentence": "Breaking news",
+                  "objectID": "637600351"
+                },
+              ]
+              const promises = initialCards.map(function(card) {
+                return ExplaainAuthor.saveCard(card)
+              })
+              return Q.allSettled(promises)
+            }).then(function() {
+              console.log('yoyoyoyoyoyo');
+              d.resolve()
+            }).catch(function(e) {
+              d.reject(e)
+            })
+          } else {
+            d.resolve()
+          }
+          return d.promise
+        }
+
         /**
          * Print files.
         */
@@ -221,9 +276,12 @@
           console.log(gapi.client);
           console.log(gapi.client.drive);
 
-          gapi.client.drive.files.list({
-            'pageSize': 10,
-            'fields': "nextPageToken, files(id, name, mimeType)"
+          resetDb()
+          .then(function() {
+            return gapi.client.drive.files.list({
+              'pageSize': 10,
+              'fields': "nextPageToken, files(id, name, mimeType)"
+            })
           }).then(function(response) {
             console.log(response);
             var files = response.result.files;
@@ -459,13 +517,7 @@
       beginDelete: function(objectID) {
         const self = this
         self.closePopup()
-        const data = {
-          sender: this.getUser().id,
-          objectID: objectID,
-          callback: self.modalCallback
-        }
-        console.log(19191);
-        ExplaainAuthor.deleteCard(data)
+        self.deleteCard(objectID)
         .then(function() {
           console.log('Deletion complete')
           self.mainCardList.forEach(function(cardID, i) { //temporary - doesn't check to see whether it's actually been deleted!
@@ -479,6 +531,44 @@
             }
           })
         })
+      },
+      deleteCard: function(objectID) {
+        const d = Q.defer()
+        const data = {
+          sender: this.getUser().id,
+          objectID: objectID
+        }
+        ExplaainAuthor.deleteCard(data)
+        .then(function() {
+          d.resolve()
+        }).catch(function(e) {
+          console.log(e);
+          d.reject(e)
+        })
+        return d.promise
+      },
+      deleteAllCards: function() {
+        console.log('Deleting all cards...!!!')
+        const d = Q.defer()
+        const self = this
+        ExplaainSearch.searchCards(self.getUser().id, "", 50)
+        .then(function(hits) {
+          const promises = hits.map(function(card) {
+            return self.deleteCard(card.objectID)
+          })
+          console.log(promises);
+          Q.allSettled(promises)
+          .then(function() {
+            console.log('hihihihihihi');
+            d.resolve()
+          }).catch(function(e) {
+            d.reject(e)
+          })
+        }).catch(function(e) {
+          console.log(e);
+          d.reject(e)
+        })
+        return d.promise
       },
       updateCard: function(data, callback, errorCallback) {
         const self = this

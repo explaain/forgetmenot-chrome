@@ -90,6 +90,7 @@ export default {
     text: {
       get: function() {
         const text = this.card.content.description || ''
+        if (!text || !text.length) console.log(text);
         return this.full ? text : text.trunc(100, true)
       },
       set: function(val) {

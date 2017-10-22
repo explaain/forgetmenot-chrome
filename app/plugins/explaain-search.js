@@ -57,14 +57,10 @@ const Search = {
       const self = this
       const promises = []
       cards.forEach(function(card) {
-        console.log(JSON.stringify(card));
-        console.log(JSON.stringify(card.content));
         card = correctCard(card)
-        console.log(JSON.stringify(card.content));
         card.content.listCards = []
         if (!card.content.listItems) card.content.listItems = []
         card.content.listItems.forEach(function(key) {
-          console.log(key);
           const p = Q.defer()
           promises.push(getCard(key)) // Do we need to notify the card or provide callbacks etc here?
           // promises.push(p.promise)
@@ -73,8 +69,6 @@ const Search = {
       log.trace(promises);
       Q.allSettled(promises)
       .then(function(results) {
-        console.log(results);
-        console.log(cards);
         d.resolve(results);
       }).catch(function(e) {
         log.trace(e);
