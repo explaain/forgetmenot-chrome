@@ -75,13 +75,13 @@ export default {
     listCards: {
       get: function() {
         const self = this
-        return self.card.listItems ? self.card.listItems.map(function(objectID) {
-          return self.tempListCards[objectID] || JSON.parse(JSON.stringify(self.allCards[objectID] || null)) || { description: 'Card Not Found' }
+        return self.card.content.listItems ? self.card.content.listItems.map(function(objectID) {
+          return self.tempListCards[objectID] || JSON.parse(JSON.stringify(self.allCards[objectID] || null)) || { content: { description: 'Card Not Found' } }
         }) : []
       },
       set: function(newValue) { // Doesn't get called for deep events which could cause issues
         const self = this
-        self.card.listItems = newValue.map(function(listCard) {
+        self.card.content.listItems = newValue.map(function(listCard) {
           self.tempListCards[listCard.objectID] = listCard // Is having this here good practice?
           return listCard.objectID
         })
@@ -89,16 +89,16 @@ export default {
     },
     text: {
       get: function() {
-        const text = this.card.description || ''
+        const text = this.card.content.description || ''
         return this.full ? text : text.trunc(100, true)
       },
       set: function(val) {
-        this.card.description = val
+        this.card.content.description = val
       }
     },
     fullText: function() {
       return this.text + this.listCards.map(function(listCard) {
-        return '\n- ' + listCard.description
+        return '\n- ' + listCard.content.description
       })
     },
     fontSize: function() {
@@ -109,6 +109,8 @@ export default {
   watch: {
     data: {
       handler: function(val) {
+        console.log('data data');
+        console.log(this.editing);
         this.editing ? null : this.syncData()
       },
       deep: true
@@ -127,6 +129,7 @@ export default {
   },
   methods: {
     syncData: function() {
+      console.log('sync');
       this.card = JSON.parse(JSON.stringify(this.data))
     },
     cardMouseover: function() {
@@ -157,12 +160,13 @@ export default {
     },
     saveEdit: function() {
       const self = this
-      self.card.listCards = self.listCards
+      self.card.content.listCards = self.listCards
       self.listCards.forEach(function(listCard) {
         self.tempListCards[listCard.objectID] = listCard
       })
-      self.$emit('updateCard', self.card, function() {
+      self.$emit('updateCard', self.card, function(data) {
         self.tempListCards = {}
+        self.syncData() // Shouldn't be necessary if data were properly being wtached deeply
       }, function(e) {
         console.log(e)
         self.tempListCards = {}
@@ -176,16 +180,18 @@ export default {
         card = {
           objectID: 'TEMP_' + Math.floor(Math.random()*10000000000),
           intent: 'storeMemory',
-          description: '',
+          content: {
+            description: '',
+          }
         }
       }
       self.tempListCards[card.objectID] = card
-      if (!self.card.listItems) Vue.set(self.card, 'listItems', [])
-      self.card.listItems.push(card.objectID)
+      if (!self.card.content.listItems) Vue.set(self.card.content, 'listItems', [])
+      self.card.content.listItems.push(card.objectID)
     },
     removeListItem: function(data) {
-      const listIndex = this.card.listItems.indexOf(data.objectID) // Doesn't account for same item appearing twice in list
-      this.card.listItems.splice(listIndex, 1)
+      const listIndex = this.card.content.listItems.indexOf(data.objectID) // Doesn't account for same item appearing twice in list
+      this.card.content.listItems.splice(listIndex, 1)
     },
     toggleListSearch: function() {
       console.log('toggleListSearch');

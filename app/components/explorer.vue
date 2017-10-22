@@ -313,7 +313,7 @@
           chunk = chunk.trim()
           if (chunk.length)
             cards.push({
-              text: chunk,
+              description: chunk,
               extractedFrom: {
                 title: file.name,
                 url: file.webContentLink // Could be webViewLink?
@@ -483,8 +483,8 @@
       updateCard: function(data, callback, errorCallback) {
         const self = this
         const promises = []
-        if (data.listCards && data.listCards.length) {
-          data.listCards.forEach(function(listCard, index) {
+        if (data.content && data.content.listCards && data.content.listCards.length) {
+          data.content.listCards.forEach(function(listCard, index) {
             const p = Q.defer()
             if (!listCard.objectID || listCard.objectID.indexOf('TEMP') == 0) {
               if (listCard.objectID) delete listCard.objectID
@@ -494,7 +494,7 @@
             console.log('hi');
             self.saveCard(listCard)
             .then(function(savedListCard) {
-              data.listItems[index] = savedListCard.objectID // In case it was a new listCard. This also relies on the index still being correct after the asynchronous delay
+              data.content.listItems[index] = savedListCard.objectID // In case it was a new listCard. This also relies on the index still being correct after the asynchronous delay
               p.resolve()
             }).catch(function(e) {
               p.reject(e)
@@ -515,15 +515,18 @@
       saveCard: function(card) {
         const d = Q.defer()
         const self = this
+        if (card.content && card.content.listCards) delete card.content.listCards
         if (self.getCard(card.objectID)) self.setCardProperty(card.objectID, 'updating', true)
         console.log('yo');
         ExplaainAuthor.saveCard(card)
         .then(function(res) {
           // card.objectID = res.data.memories[0].objectID // In case it was a new card
           const returnedCard = res.data.memories[0]
+          card.objectID = returnedCard.objectID
+          card.updating = false
           self.setCard(returnedCard.objectID, card)
-          self.setCardProperty(returnedCard.objectID, 'objectID', returnedCard.objectID) // In case it was a new card
-          self.setCardProperty(returnedCard.objectID, 'updating', false)
+          // self.setCardProperty(returnedCard.objectID, 'objectID', returnedCard.objectID) // In case it was a new card
+          // self.setCardProperty(returnedCard.objectID, 'updating', false)
           d.resolve(card)
         }).catch(function(e) {
           console.error(e);

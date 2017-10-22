@@ -16,6 +16,7 @@ const Search = {
     })
     const AlgoliaIndex = AlgoliaClient.initIndex(options.index);
 
+
     const advancedSearch = function(params) {
       const d = Q.defer()
       AlgoliaIndex.clearCache()
@@ -26,11 +27,6 @@ const Search = {
         } else {
           fetchListItemCards(content.hits)
           .then(function() {
-            content.hits.forEach(function(hit) {
-              if (!hit.description) hit.description = hit.sentence || hit.text
-              delete hit.sentence
-              delete hit.text
-            })
             d.resolve(content.hits)
           })
         }
@@ -61,15 +57,18 @@ const Search = {
       const self = this
       const promises = []
       cards.forEach(function(card) {
-        card.listCards = []
-        if (card.listItems) {
-          card.listItems.forEach(function(key) {
-            console.log(key);
-            const p = Q.defer()
-            getCard(key) // Do we need to notify the card or provide callbacks etc here?
-            // promises.push(p.promise)
-          })
-        }
+        console.log(JSON.stringify(card));
+        console.log(JSON.stringify(card.content));
+        card = correctCard(card)
+        console.log(JSON.stringify(card.content));
+        card.content.listCards = []
+        if (!card.content.listItems) card.content.listItems = []
+        card.content.listItems.forEach(function(key) {
+          console.log(key);
+          const p = Q.defer()
+          promises.push(getCard(key)) // Do we need to notify the card or provide callbacks etc here?
+          // promises.push(p.promise)
+        })
       })
       log.trace(promises);
       Q.allSettled(promises)
@@ -95,6 +94,20 @@ const Search = {
         }
       })
       return d.promise
+    }
+
+    const correctCard = function(card) {
+      console.log(JSON.stringify(card.content));
+      if (!card.content) card.content = {
+        description: card.description || card.sentence || card.text,
+        listItems: card.listItems || [],
+      }
+      console.log(JSON.stringify(card.content));
+      if (card.sentence) delete card.sentence
+      if (card.text) delete card.text
+      if (card.description) delete card.description
+      if (card.objectID == "624391002") console.log(hit);
+      return card
     }
 
     const compoundSearch = function(userID, searchText) {

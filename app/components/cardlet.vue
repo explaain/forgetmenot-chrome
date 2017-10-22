@@ -2,7 +2,7 @@
   <div class="card cardlet" @click.stop="cardletClick">
     <ibutton v-if="editing" class="drag" icon="bars" text=""></ibutton>
     <ibutton v-if="editing" class="remove" icon="close" text="" :click="removeCardlet"></ibutton>
-    <editable :content="card.description" :editable="editing" @update="card.description = $event"></editable>
+    <editable :content="card.content.description" :editable="editing" @update="card.content.description = $event"></editable>
   </div>
 </template>
 
