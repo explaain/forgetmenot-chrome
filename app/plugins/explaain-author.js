@@ -74,7 +74,6 @@ const Author = {
     const deleteCard = function(data) {
       const d = Q.defer()
       const self = this;
-      console.log('data: ', data);
       Vue.axios.delete(url, {params: data})
       .then((response) => {
         console.log('Card successfully deleted');

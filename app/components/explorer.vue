@@ -233,7 +233,6 @@
                       "url": "https://s0.wp.com/wp-content/themes/vip/techcrunch-2013/assets/images/techcrunch.opengraph.default.png"
                     }
                   ],
-                  "objectID": "6376003513244535"
                 },
                 {
                   "context": [],
@@ -246,7 +245,6 @@
                   "dateCreated": 1507109266738,
                   "triggerURL": "mail.google.com",
                   "actionSentence": "Breaking news",
-                  "objectID": "637600351"
                 },
               ]
               const promises = initialCards.map(function(card) {
@@ -760,7 +758,7 @@
 
   .popup {
     position: fixed;
-    z-index: 1;
+    z-index: 100;
     top: 0;
     bottom: 0;
     left: 0;

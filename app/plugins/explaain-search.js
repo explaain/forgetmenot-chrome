@@ -91,15 +91,15 @@ const Search = {
     }
 
     const correctCard = function(card) {
-      console.log(JSON.stringify(card.content));
       if (!card.content) card.content = {
         description: card.description || card.sentence || card.text,
         listItems: card.listItems || [],
       }
-      console.log(JSON.stringify(card.content));
-      if (card.sentence) delete card.sentence
-      if (card.text) delete card.text
-      if (card.description) delete card.description
+      card.sentence = card.content.description
+      card.description = card.content.description
+      // if (card.sentence) delete card.sentence
+      // if (card.text) delete card.text
+      // if (card.description) delete card.description
       if (card.objectID == "624391002") console.log(hit);
       return card
     }
